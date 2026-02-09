@@ -48,4 +48,21 @@ const sequelize =  new Sequelize(
 
 
     }
-)
+);
+
+/* Funcion para probar la conexion de la base de datos esta funcion se llamara al iniciar el servidor */
+const testConnection = async () => {
+    try {
+        //intentar autenticar con la base de datos
+        await sequelize.authenticate();
+        console.log('conexion a mysql establecida correctamente');
+        return true;
+
+    } catch (error){
+        console.error('X Error al conectar con MySQL:', error.message);
+        console.error('verefica que XAMP este corriendo y las credencials en .env sean correctas');
+        return false;
+    }
+};
+
+
