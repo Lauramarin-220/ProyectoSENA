@@ -78,7 +78,7 @@ const syncDataBase = async (force = false, alter = false) => {
         await sequelize.sync({force, alter});
 
         if (force) {
-            console.log('Base de datos sincronizada todas las tablas eliminadas y recreadas');
+            console.log('Base de datos sincronizada todas las tablas recreadas');
         }  else if (alter){
         console.log('Base de datos sincronizada tablas alteradas segun los modelos');
         } else {
