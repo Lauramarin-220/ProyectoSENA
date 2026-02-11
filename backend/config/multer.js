@@ -72,3 +72,70 @@ const storage = multer.diskStorage({
  * @param {object} file - archivo que esta subiendo
  * @param {function} cb - Callback que se llama con (error, acceptFile)
  */
+
+const fileFilter = (req, file, cb) => {
+
+  // Tiempos Mime permitidos para imagenes
+   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+
+   //Verificar si el tipo del archivo esta en la lista permitida
+   if (allowedTypes.includes(file.mimetype)) {
+  // cb(null, true) -> aceptar el archivo
+  cb(null, true);
+ } else {
+  // cb(error)-> recharzar el archivo 
+  cb(new Error('Solo se permite imagenes (jpg, jpeg, png, gif)'), false);
+ }
+};
+
+/**
+ * Configurar multer con las opciones definidas
+ */
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    //limite de tamaño del archivo
+    //por defecto 5MB (5 * 1024) 5242800 bytes
+    fileSize: parseInt(process.env.MAX_FILE_SIZE) || 5242800
+
+  }
+});
+
+/**
+ * Funcion para eliminar el archivo del servidor 
+ * Util cuando se actualiza o elimina un producto y se necesita eliminar la imagen asociada 
+ * 
+ * @param {strig} filename - nombre del archivo a eliminar
+ * @return {Boolean} - true si se elimino correctamente, false si no se pudo eliminar
+ */
+
+const deleteFile = (filename) => {
+  try {
+    // Construir la ruta completa del archivo
+    const flePath = path.join(uploadPath, filename);
+
+    // verificar si el archivo existe
+    if (fs.existsSync(filePath)) {
+      //Eliminar el archivo
+      fs.unlinkSync(filePath);
+       console.log(`Archivo eliminado: ${filename}`);
+      return true;
+    } else {
+      console.log(`Archivo no encontrado: ${filename}`);
+      return false;
+
+    }
+} catch (error) {
+    console.error('Error al eliminar el archivo:', error.message);
+    return false;
+   }
+
+};
+
+// Exportar configuracion de multer y funcion de eliminacion 
+module.exports = {
+  upload,
+  deleteFile
+};
