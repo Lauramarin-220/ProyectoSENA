@@ -178,7 +178,7 @@ subcategoria.prototype.contarProductos = async function() {
  * @returns {Promise<Categoria>} - categoria padre 
  */
 subcategoria.prototype.obtenerCategoria = async function() {
-   const Categoria = require('./Categoria');
+   const Categoria = require('./Categoria'); 
    return await Categoria.findByPk(this.categoriaId);
 }
 
