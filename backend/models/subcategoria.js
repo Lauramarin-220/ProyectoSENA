@@ -97,12 +97,13 @@ const Subcategoria = sequelize.define('Subcategoria', {
         },
         {
             //Indice compuesto: nombre unico por categoria
-            //peermite que dos categorias diferentes tenga subcategorias con el mismo nombre 
+            //permite que dos categorias diferentes tenga subcategorias con el mismo nombre 
             unique: true,
             fields: ['nombre','categoriaId'],
             name: 'nombre_categoria_unique'
         }
     ],
+
 
     /**
      * Hooks Acciones automaticas 

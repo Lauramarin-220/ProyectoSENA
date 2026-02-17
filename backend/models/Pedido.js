@@ -96,81 +96,55 @@ const Pedido = sequelize.define('pedido', {
             }
         }
     },
+
     // notas adicionales del pedido (opcional)
     notas: {
         type: DataTypes.TEXT,
         allowNull: true
     },
 
-       // ProductoId del Producto en el carrito 
-    ProductoId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: 'Productos',
-            key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE', // se elimina el producto del carrito
-        validate: {
-            notNull: {
-                msg: 'Debe especificar un producto'
-            }
-        }
+    //Fecha de pago
+    fechaPago: {
+        type: DataTypes.DATE,
+        allowNull: true,
     },
 
-    // cantidad de este producto en el carrito 
-    cantidad: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 1,
-        validate: {
-            isInt: {
-                msg: 'La cantidad debe ser un numero entero'
-            },
-            min: {
-                args: [1],
-                msg: 'La cantidad  debe ser al menos 1' 
-            }
-        }
+    //Fecha de envio
+    fechaEnvio: {
+        type: DataTypes.DATE,
+        allowNull: true,
     },
-    /**
-     * Precio Unitario del producto al momento de agregarlo al carrito
-     * Se guarda para mantener el precio aunque el producto cambie de precio 
-     */
-    precioUnitario: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-        validate: {
-            isDecimal: {
-                msg: 'El precio debe ser un numero decimal'
-            },
-            min: {
-                args: [0],
-                msg: 'El precio no puede ser negativo'
-            }
-        }
+
+    //Fecha de Entrega
+    fechaEntrega: {
+        type: DataTypes.DATE,
+        allowNull: true,
     },
+
 }, {
     //Opciones de modelo
     
-    tableName: 'carritos', 
+    tableName: 'Pedidos', 
     timestamps: true,
-
     // Indices para mejorar las busquedas 
     indexes: [
         {
-        //Indice para buscar carrito por usuario
-        fields: ['usuarioId']
-    },
-    {
-    //Indice compuesto: un usuario no puede tener el mismo producto duplicado
-    unique: true,
-        fields: ['usuarioId', 'productoId'],
-        name: 'usuario_producto_unique'
-    } 
+            //Indice para buscar carrito por usuario
+            fields: ['usuarioId']
+        },
+
+        {
+            //Indice para buscar pedidos por estado
+            fields: ['estado']
+        },
+
+        {
+            //Indice para buscar pedidos por fecha
+            fields: ['createdAt']
+        },
     ],
-        /**
+
+    /**
      * Hooks Acciones automaticas 
      */
 
@@ -178,8 +152,8 @@ const Pedido = sequelize.define('pedido', {
         /**
          * beforeCreate -  se ejecuta antes de crear un item en el carrito 
          * valida que este esta activo y tenga stock suficiente 
-         */
-        beforeCreate: async (itemCarrito) => {
+        
+         beforeCreate: async (itemCarrito) => {
             const Producto = require('./Categoria');
 
             //Buscar el producto 
@@ -201,112 +175,151 @@ const Pedido = sequelize.define('pedido', {
             // Guarda el precio actual del producto 
             itemCarrito.precioUnitario = producto.precio
         },
+        */
 
         /**
-         * BeforeUpdate: se ejecuta antes de actualizar un carrito
-         * Valida que haya stock suficiente si se aumenta la cantidad 
+         * afterUpdate: se ejecuta despues de actualizar un pedido
+         * actualiza las fechas segun el estado 
          */
 
-        BeforeUpdate: async (itemCarrito) => {
-            
-            if (itemCarrito.changed('cantidad')) {
-                const Producto = require('./Producto');
-                const producto = await Producto.findByPk (itemCarrito.productoId);
-
-                if (!producto) {
-                    throw new Error('El producto no existe');
+            afterUpdate: async (pedido) => {
+                // Si es estado cambio a pagaddo guarda la fecha de pago
+                if (pedido.changed('estado') && pedido.estado === 'pagado') {
+                    pedido.fechaPago = new Date();
+                    await pedido.save ({ hooks: false}); // Guardar sin ejecutar hooks
+                }
+                // Si el estado cambio a enviado guarda la fecha de envio 
+                if (!pedido.changed('estado') && pedido.estado === 'enviado' && !pedido.fechaEnvio) {
+                    pedido.fechaEnvio = new Date();
+                    await pedido.save ({ hooks: false }); // Guardar sin ejecutar hooks
                 }
 
-                if (!producto.hayStock(itemCarrito.cantidad)) {
-                    throw new Error (`Error insufciente. solo hay ${producto.stock} unidades disponibles`);
+                // Si el estado cambio a enviado guarda la fecha de entregado
+                if (!pedido.changed('estado') && pedido.estado === 'entregado' && !pedido.fechaEntrega) {
+                    pedido.fechaEntrega = new Date();
+                    await pedido.save ({ hooks: false }); // Guardar sin ejecutar hooks
                 }
+            },
+
+            /**
+             * beforeDestory: se ejecuta antes de eliminar un pedido
+             */
+            beforeDestroy: async () => {
+                throw new Error('No se puede eliminar pedidos, use el estado cancelado en su lugar');
             }
         }
-    }
-});
+    });
  
 // METODOS DE INSTACIA 
 
 /**
- * Metodo para calcular el precio subtotal de este item
- * @returns {number} - Subtotal (precio * cantidad)
+ * Metodo para cambiar el estado del pedido
+ * @param {string} nuevoEstado - nuevo estado del pedido
+ * @returns {number} - sub total (precio * cantidad)
  */
 
-Carrito.prototype.calcularSubtotal = function() {
-   return parseFloat(this.precioUnitario) * this.cantidad;
-};
+Pedido.prototype.cambiarEstado =async function(nuevoEstado) {
+   const estadosValidos = ['pendiente', 'pagado', 'enviado', 'cancelado'];
 
-/**
- * Metodo para actualizar la cantidad 
- * 
- * @param {number} nuevaCantidad - nueva cantidad
- * @return {Promise} item actualizado 
- */
-Carrito.prototype.actualizarCantidad = async function (nuevaCantidad) {
-    const Producto = require('./Producto');
+   if (!estadosValidos.includes(nuevoEstado)) {
+    throw new Error('Estado invalido')
+   }
 
-    const producto = await Producto.findByPk(this.productoId);
-
-    if (!producto.hayStock(nuevaCantidad)) {
-        throw new Error(`Stock insuficiente. solo hay ${producto.stock} unidades disponibles`);
-    }
-
-    this.cantidad = nuevaCantidad;
+    this.estado = nuevoEstado;
     return await this.save();
 };
 
 /**
- * Metodo para obtener el carrito completo de un usuario 
- * incluye informacion de los productos 
- * @param {number} usuarioId - id del usuario
- * @return {Promise<Array>} - item del carrito con productos 
+ * Metodo para verificar si el pedido puede ser cancelado 
+ * solo se puede cancelar si esta en estado pendiente o pagado
+ * @returns {boolean} - true si se puede cancelar y false si no
  */
-Carrito.obtenerCarritoUsuario = async function (usuarioId) {
-    const Producto = require('./Producto')
 
-    return await this.findAll({
-        where: {usuarioId},
-        include: [
-        {
-            model: Producto,
-            as: 'producto'
-        }
-    ],
-     order: [['createdAt', 'DESC']]
-    }); 
+Pedido.prototype.puedeCancelar = function() {
+    return ['pendiente', 'pagado'].includes(this.estado);
 };
 
-
 /**
- * Metodo para calcular el total del carrito de un usuario
- * @param {number} usuarioId - id del usuario
- * @return {Promise<number>} - total del carrito
+ * Metodo para cancelar pedido
+ * @returns {Promise<Pedido>} - Pedido cancelado
  */
-Carrito.calcularTotalCarrito = async function(usuarioId)
-{
-    const items = await this.findAll({
-        where: {usuarioId}
-    });
-
-    let total = 0;
-    for (const item of items) {
-        total += item.calcularSubtotal();
+Pedido.prototype.cancelar = async function () {
+    if (!this.puedeCancelar()) {
+        throw new Error('Este pedido no puede ser cancelado');
     }
-    return total;
+
+    // importar modelos
+    const DetallePedido = require('./DetallePedido');
+    const Producto = require('./Producto');
+
+    //obtener detalles del pedido
+    const detalles = await DetallePedido.findAll({
+        where: { pedidoId: this.id}
+    });
+    
+    //devolver el stock de cada producto 
+    for (const detalle of detalles) {
+        const producto = await Producto.findByPk(detalle.productoId);
+        if (producto) {
+            await producto.aumentarStock(detalle.cantidad);
+            console.log(` Stock devuelto: ${detalle.cantidad} X ${producto.nombre}`);
+        }
+    }
+
+    // Cambiar estado a cancelado 
+    this.estado ='cancelado';
+    return await this.save();
 };
 
 /**
- * Metodo para vaciar el carrito de un usuario
- * util despues de realizar el pedido 
- * 
- * @param {number} usuarioId - id del usuario
- * @returns {Promise<number>} - numero de items eliminados
+ * Metodo para obtener detalle del pedido con productos
+ * @returns {Promise<Array>} - detalle pedido
  */
-Carrito.vaciarCarrito = async function(usuarioId){
-    return await this.destroy({
-        where: { usuarioId }
+Pedido.prototype.obtenerDetalle = async function() {
+    const DetallePedido = require('./DetallePedido');
+    const Producto = require('./Producto');
+
+    return await DetallePedido.findAll ({
+        where: { pedidoId: this.id},
+        include: [
+            {
+                model: Producto,
+                as: 'producto'
+            }
+        ]
     });
 };
 
+/**
+ * Metodo para obtener el total pedidos por estado 
+ * @param {string} estado - estado a filtrar
+ * @returns {Promise<Array>} - pedidos filtrados 
+ */
+Pedido.obtenerPorEstado = async function(estado){
+    const Usuario = require ('./Usuario');
+    return await this.findAll({
+        where: { estado },
+        incluide: [
+            {
+                model: Usuario,
+                as: 'usuario',
+                attributes: ['id', 'nombre', 'email', 'telefono' ]
+            }
+        ],
+        order: [['creatdAt', 'DESC']]
+    });
+};
+
+/**
+ * Metodo para obtener historial de pedidos de un usuario
+ * @param {number} usuarioId - id del usuario
+ * @returns {Promise<Array>} - pedidos del usuario
+ */
+Pedido.obtenerHistoralusuario = async function(usuarioId){
+    return await this.findAll({
+        where: { usuarioId },
+        order: [['creatdAt', 'DESC']]
+    });
+};
 // Expotar modelo
-module.exports = Carrito;
+module.exports = Pedido;
