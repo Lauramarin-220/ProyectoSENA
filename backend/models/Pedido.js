@@ -42,7 +42,7 @@ const Pedido = sequelize.define('pedido', {
     },
 
     // Total monto total del pedido 
-    tottal: {
+    total: {
         type: DataTypes.DECIMAL (10, 2),
         allowNull: false,
         validate: {
