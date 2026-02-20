@@ -295,11 +295,11 @@ const toggleCategoria = async (req, res) => {
 
         // contar cuantas registros se afectaron
         const subcategoriaAfectadas = await
-        Subcategoria.count({ where: { categoriaId: id}
+        Subcategoria.count({ where: { categoriaId: id }
         });
 
         const productosAfectados = await
-        Producto.count({ where: { categoriaId: id}
+        Producto.count({ where: { categoriaId: id }
         });
 
         // Respuesta exitosa
