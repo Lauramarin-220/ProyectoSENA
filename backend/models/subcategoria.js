@@ -184,4 +184,4 @@ subcategoria.prototype.obtenerCategoria = async function() {
 }
 
 //Exportar modelo subcategoria 
-module.exports = subcategoria;
+module.exports = Subcategoria;
