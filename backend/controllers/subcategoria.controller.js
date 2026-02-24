@@ -1,6 +1,6 @@
 /**
- * Controlador de categorias
- * maneja las operaciones crud y activar y desativar categorias
+ * Controlador de subcategorias
+ * maneja las operaciones crud y activar y desativar subcategorias
  * solo accesible por adminitradores
  */
 
@@ -8,85 +8,90 @@
  * Importar modelos
  */
 
-const Categoria = require('../models/Categoria');
 const Subcategoria = require('../models/Subcategoria');
+const Categoria = require('../models/Categoria');
 const Producto = require('../models/Producto');
 
 /**
- * obtener todas las categorias
+ * obtener todas las subcategorias
  * query params:
+ * categoriaId: Id de la categoria para filtrar por categoria
  * Activo true/false (filtrar por estado)
- * incluirsubcategorias true/false (incluir subcategorias relacionadas)
+ * incluir categoria true/false (incluir categorias relacionadas)
  * 
  * @param {Object} req request Express
  * @param {Object} res response Express
  */
 
-const getCategorias = async (req, res) => {
+const getSubategorias = async (req, res) => {
     try {
-        const { activo, IncluirSubcategorias } = req.query
+        const { categoriaId, activo, incluirCategoria } = req.query
 
         // Opciones de consulta
         const opciones = {
             order: [['nombre', 'ASC']] //ordenar de manera alfabetica
         };
 
-        //Filtrar por estado activo si es esoecifica
-        if (activo !== undefined) {
-            opciones.where = { activo: activo === 'true' };
+        //Filtros
+        const where = {};
+        if (categoriaId) where.categoriaId = categoriaId;
+        if (activo !== undefined) where.activo = activo === 'true';
+
+        if(Object.keys(where).length > 0) {
+            opciones.where = where;
         }
 
-        // Incluir subcategorias si se solicita
-        if (IncluirSubcategorias === 'true') {
+        // Incluir categoria si se solicita
+        if (incluirCategoria === 'true') {
             opciones.include == [{
-                model: Subcategoria,
-                as: 'subcategorias', // campo del alias para la relacion 
-                attributes: [ 'id', 'nombre', 'descripcion', 'activo'] //Campos a incluir de la subcategoria
+                model: Categoria,
+                as: 'categoria', // campo del alias para la relacion 
+                attributes: [ 'id', 'nombre', 'activo'] //Campos a incluir de la categoria
             }]
         }
 
-        // Obtener categorias 
-        const categorias = await Categoria.findAll(opciones);
+        // Obtener subcategorias 
+        const subcategorias = await Subcategoria.findAll(opciones);
 
         //Respuesta exitosa
 
         res.json({
             sucess: true,
-            count: categorias.length,
+            count: subcategorias.length,
             data: {
-                categorias
+                subcategorias
             }
         });
 
     } catch (error) {
-        console.error('Error en getCategorias: ', error);
+        console.error('Error en getSubategorias: ', error);
         res.status(500).json[{
             sucess: false,
-            message: 'Error al obtener categorias',
+            message: 'Error al obtener subcategorias',
             error: error.message
         }]
     }
 };
 
 /**
- * obtener todas las categorias por id
- * GET /api/categorias/:id
+ * obtener todas las subcategorias por id
+ * GET /api/subcategorias/:id
  * 
  * @param {Object} req request Express
  * @param {Object} res response Express
  */
 
-const getCategoriasById = async (req, res) => {
+const getSubcategoriasById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Buscar categorias con subcategorias y contar productos
-        const categoria = await Categoria. findAll( id, {
+        //Buscar subcategorias y contar productos
+        const subcategoria = await Subcategoria. findAll( id, {
             include: [
                 {
-                    model: Subcategoria,
-                    as: 'subcategorias',
-                    attributes: ['id', 'nombre', 'descripcion', 'activo']
+                    model: Categoria,
+                    as: 'categoria',
+                    attributes: ['id', 'nombre', 'activo']
                 },
                 {
                     model: Producto,
@@ -96,54 +101,64 @@ const getCategoriasById = async (req, res) => {
             ]
         });
 
-        if (!categoria) {
+        if (!subcategoria) {
             return res.status(404).json({
                 success: false,
-                message: 'Categoria no encontrada'
+                message: 'Subcategoria no encontrada'
             });
         }
 
         //agregar contadpr de productos
-        const categoriaJSON = categoria.toJSON();
-        categoriaJSON.totalProductos = categoriaJSON.productos.length;
-        delete categoriaJSON.productos; //no enviar la lista completa, solo el contador
+        const subcategoriaJSON = subcategoria.toJSON();
+        subcategoriaJSON.totalProductos = subcategoriaJSON.productos.length;
+        delete subcategoriaJSON.productos; //no enviar la lista completa, solo el contador
 
         // Respuesta Exitosa
         res.json({
             success: true,
             data: {
-                categoria: categoriaJSON
+                subcategoria: subcategoriaJSON
             }
         });
 
 
     } catch (error) {
-        console.error('Error en getCategoriasById: ', error);
+        console.error('Error en getSubcategoriaById: ', error);
         res.status(500).json[{
             sucess: false,
-            message: 'Error al obtener categoria',
+            message: 'Error al obtener subcategoria',
             error: error.message
         }]
     }
 };
 
 /**
- * Crear una categoria
- * POST 7api/admin/categorias
- * Body: { nombre, descripcion }
+ * Crear una subcategoria
+ * POST /api/admin/subcategorias
+ * Body: { nombre, descripcion, categoriaId }
  * @param {Object} req request Express
  * @param {Object} res response Express
  */
 
-const crearCategoria = async (req, res) => {
+const crearSubcategoria = async (req, res) => {
     try {
-        const { nombre, descripcion } = req.body;
+        const { nombre, descripcion, categoriaId } = req.body;
 
         //validacion 1 verificar campos requeridos
-        if (!nombre) {
+        if (!nombre || !categoriaId) {
             return res.status(400).json({
                 success: false,
-                message: 'El nombre de la categoria es requerido'
+                message: 'El nombre y categoriaId es requerido'
+            });
+        }
+
+        //valida si la categoria existe
+        const categoria = await Categoria.findByPK(categoriaId);
+
+        if(!categoria) {
+            return res.status(404).json({
+                success: false,
+                message: `No existe la categoria con id ${categoriaId}`
             });
         }
 
