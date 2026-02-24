@@ -31,7 +31,7 @@ const getCategorias = async (req, res) => {
             order: [['nombre', 'ASC']] //ordenar de manera alfabetica
         };
 
-        //Filtrar por estado activo si es esoecifica
+        //Filtrar por estado activo si es especifica
         if (activo !== undefined) {
             opciones.where = { activo: activo === 'true' };
         }
