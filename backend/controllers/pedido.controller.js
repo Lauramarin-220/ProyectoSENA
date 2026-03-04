@@ -194,7 +194,7 @@ const crearPedido = async (req, res) => {
 * query: ?estado=pendiente&pagina=1&limite=10
 */
 
-const obtenerPedido = async (req, res) => {
+const getMisPedidos = async (req, res) => {
     try {
         const { estado, pagina =1 , limite =10 }= req.query;
 
@@ -203,7 +203,7 @@ const obtenerPedido = async (req, res) => {
         if (estado)  where. estado = estado;
 
             //Paginacion
-            const offset = (parseInt(pagina - 1)) *parseInt (limite);
+            const offset = (parseInt(pagina - 1)) * parseInt (limite);
 
             //consultar pedido
             const { count, rows: pedidos } = await Pedido.findAndCountAll({
@@ -397,4 +397,202 @@ const cancelarPedido = async (req, res) => {
             error: error.message
         });
     }
-}
+};
+
+/**
+ * admin actualizar todos los pedidos 
+ * GET/ api/admin/pedidos
+ * query ?estado=pediente&usuarioId=1&pagina=1&limite=10
+ */
+const getAllPedidos = async (req, res) => {
+    try {
+        const { estado, usuarioId, pagina=1, limite=20 } = req.query;
+
+        //filtros 
+        const where = {};
+        if (estado) where.estado = estado;
+        if (usuarioId) where.usuarioId = usuarioId;
+
+        //paginacion
+        const offset = (parseInt(pagina) - 1) * parseInt(limite);
+
+        //Consultar pedidos
+        const { count, rows: pedidos } = await Pedido.findAndCountAll({
+            where,
+            include: [
+            {
+                model: Usuario,
+                as: 'usuario',
+                attributes: ['id', 'nombre', 'email']
+            },
+            {
+             model: DetallePedido,
+                as: 'detalles',
+                include: [{
+                    model: Producto,
+                    as: 'producto',
+                    attributes: ['id', 'nombre', 'precio', 'imagen']
+                }]
+            }
+        ],
+        limit: parseInt(limite),
+        offset,
+        order: [['createdAt', 'DESC']]
+    });
+
+     //Retonar respuesta exitosa
+        res.json({
+            success: true,
+            data: {
+                pedidos,
+                paginacion: {
+                total: count,
+                pagina: parseInt(pagina),
+                limite: parseInt(limite),
+                totalPaginas: Math.ceil( count / parseInt(limite))
+                }
+            } 
+        });
+    } catch (error) {
+        console.error('Error al getAllPedidos: ', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener pedidos, intente nuevamente mas tarde',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Amin actualiza el estado del pedido
+ * POST/api/admin/pedidos/:id/estado
+ * body:{ estado }
+ */
+const actualizarEstadoPedido = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { estado } = req.body;
+
+        //Validar estado 
+        const estadosValidos = ['pediente', 'enviado', 'entregado', 'cancelado'];
+        if (!estadosValidos.includes(estado)) {
+            return res.status(400).json({
+                success: false,
+                message: `Estado no valido. opciones validas: ${estadosValidos.join(', ')}`
+            });
+        }
+
+        //buscar pedido 
+        const pedido = await Pedido.findByPk(id);
+
+        if (!pedido) {
+            return res.status(404).json({
+                success: false,
+                message: 'Pedido no encontrado'
+            });
+        }
+
+        //actualizar estados
+        pedido.estado = estado;
+        await pedido.save();
+
+        //recargar con relaciones
+        await pedido.reload({
+            include: [
+                {
+                    model: Usuario,
+                    as: 'usuario',
+                    attributes: ['id', 'nombre', 'email']
+                }
+            ]
+        });
+
+        //Respuesta existosa
+        res.json({
+            success: true, 
+            message: 'Estado del pedido actualizado correctamente',
+            data: {
+                pedido
+            }
+        });
+
+    } catch (error) {
+        console.error('Error al actualizarEstadoPedido: ', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al actualizar estado del pedido, intente nuevamente mas tarde',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Obtener estadisticas de pedidos para admin
+ * GET/api/admin/pedidos/estadisticas
+ */
+
+const getEstadisticasPedidos = async (req, res) => {
+    try {
+        const { Op, fn, col } = require('sequelize');
+
+        //Total pedidos
+        const totalPedidos = await Pedido.count();
+
+        //Pedidos estado
+        const pedidosporestado = await Pedido.findAll({
+            attributes: [
+                'estado',
+                [fn('COUNT', col('id')), 'cantidad']
+                [fn('SUM', col('total')), 'tottalVentas']
+            ],
+            group: ['estado']
+        }); 
+
+        //total ventas
+        const totalVentas = await Pedido.sum('total');
+
+        //Pedidos hoy
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+
+        const pedidosHoy = await Pedido.count({
+            where: {
+                createdAt: { [Op.gte]: hoy } //pedidos ultimos 7 dias 
+            }
+        });
+
+        //Respuesta exitosa
+        res.json({
+            success: true,
+            data: {
+                totalPedidos,
+                pedidosHoy,
+                VentasTotales: parseFloat(totalVentas).toFixed(2),
+                pedidosporestado: pedidosporestado.map(p => ({
+                    estado: p.estado,
+                    cantidad: parseInt(p.getDataValue('cantidad')),
+                    totalVentas: parseFloat(p.getDataValue('totalVentas') || 0).toFixed(2)
+                })) 
+            }
+        });
+    } catch (error) {
+        console.error('Error al getEstadisticasPedidos: ', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener estadisticas de pedidos, intente nuevamente mas tarde',
+            error: error.message
+        });
+    }
+};
+
+//Exportar controladores
+module.exports = {
+    crearPedido,
+    getMisPedidos,
+    getPedidoById,
+    cancelarPedido,
+    //Admin
+    getAllPedidos,
+    actualizarEstadoPedido,
+    getEstadisticasPedidos
+};
