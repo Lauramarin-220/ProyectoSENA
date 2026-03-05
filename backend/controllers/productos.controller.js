@@ -75,7 +75,7 @@ const getProductos= async (req, res) => {
 
         //Respuesta exitosa
         res.json({
-            sucess: true,
+            success: true,
             data: {
                  productos,
                  paginacion: {
