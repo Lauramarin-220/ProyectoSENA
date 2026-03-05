@@ -51,7 +51,7 @@ const getCategorias = async (req, res) => {
         //Respuesta exitosa
 
         res.json({
-            sucess: true,
+            success: true,
             count: categorias.length,
             data: {
                 categorias
@@ -61,7 +61,7 @@ const getCategorias = async (req, res) => {
     } catch (error) {
         console.error('Error en getCategorias: ', error);
         res.status(500).json[{
-            sucess: false,
+            success: false,
             message: 'Error al obtener categorias',
             error: error.message
         }]
@@ -120,7 +120,7 @@ const getCategoriasById = async (req, res) => {
     } catch (error) {
         console.error('Error en getCategoriasById: ', error);
         res.status(500).json[{
-            sucess: false,
+            success: false,
             message: 'Error al obtener categoria',
             error: error.message
         }]
@@ -255,7 +255,7 @@ const actualizarCategoria = async (req, res) => {
         }
 
         res.status(500).json ({
-            sucess: false,
+            success: false,
             message: 'error al actualizar categoria',
             error: error.message
         });
@@ -406,7 +406,7 @@ const getEstadisticasCategoria = async (req, res)  => {
 
         if (!categoria) {
             return res.status(404).json({
-                sucess: false,
+                success: false,
                 message: 'Categoria no encontrada'
             });
         }

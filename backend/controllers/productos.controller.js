@@ -90,7 +90,7 @@ const getProductos= async (req, res) => {
     } catch (error) {
         console.error('Error en getProducto: ', error);
         res.status(500).json[{
-            sucess: false,
+            success: false,
             message: 'Error al obtener producto',
             error: error.message
         }]
@@ -143,7 +143,7 @@ const getProductosById = async (req, res) => {
     } catch (error) {
         console.error('Error en getProductosById: ', error);
         res.status(500).json[{
-            sucess: false,
+            success: false,
             message: 'Error al obtener producto',
             error: error.message
         }]
@@ -412,7 +412,7 @@ const actualizarProducto = async (req, res) => {
         }
 
         res.status(500).json ({
-            sucess: false,
+            success: false,
             message: 'error al actualizar producto',
             error: error.message
         });

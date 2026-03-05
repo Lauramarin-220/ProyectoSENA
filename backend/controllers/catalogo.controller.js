@@ -355,7 +355,7 @@ const getProductosDestacados = async (req, res) => {
         res.json({
             success: true,
             data: {
-                productos: producto
+                producto
             }
         });
 

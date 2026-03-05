@@ -56,7 +56,7 @@ const getSubcategorias = async (req, res) => {
         //Respuesta exitosa
 
         res.json({
-            sucess: true,
+            success: true,
             count: subcategorias.length,
             data: {
                 subcategorias
@@ -66,7 +66,7 @@ const getSubcategorias = async (req, res) => {
     } catch (error) {
         console.error('Error en getSubategorias: ', error);
         res.status(500).json[{
-            sucess: false,
+            success: false,
             message: 'Error al obtener subcategorias',
             error: error.message
         }]
@@ -125,7 +125,7 @@ const getSubcategoriasById = async (req, res) => {
     } catch (error) {
         console.error('Error en getSubcategoriaById: ', error);
         res.status(500).json[{
-            sucess: false,
+            success: false,
             message: 'Error al obtener subcategoria',
             error: error.message
         }]
@@ -314,7 +314,7 @@ const actualizarSubcategoria = async (req, res) => {
         }
 
         res.status(500).json ({
-            sucess: false,
+            success: false,
             message: 'error al actualizar subcategoria',
             error: error.message
         });
@@ -448,7 +448,7 @@ const getEstadisticasSubCategoria = async (req, res)  => {
 
         if (!subcategoria) {
             return res.status(404).json({
-                sucess: false,
+                success: false,
                 message: 'subcategoria no encontrada'
             });
         }
