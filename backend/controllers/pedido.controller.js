@@ -259,7 +259,7 @@ const getPedidoById = async (req, res) => {
                 const { id } = req.params;
                 //construir filtros (cliente solo ve sus pedidos, admin ve todos)
                 const where = { id };
-                if (req.usuario.rol === 'cliente') {
+                if (req.usuario.rol === 'administrador') {
                     where.usuarioId = req.usuario.id;
                 }
 
@@ -545,7 +545,7 @@ const getEstadisticasPedidos = async (req, res) => {
             attributes: [
                 'estado',
                 [fn('COUNT', col('id')), 'cantidad']
-                [fn('SUM', col('total')), 'tottalVentas']
+                [fn('SUM', col('total')), 'totalVentas']
             ],
             group: ['estado']
         }); 
@@ -589,6 +589,7 @@ const getEstadisticasPedidos = async (req, res) => {
 
 //Exportar controladores
 module.exports = {
+    //cliente
     crearPedido,
     getMisPedidos,
     getPedidoById,
