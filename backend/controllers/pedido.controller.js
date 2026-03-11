@@ -153,7 +153,7 @@ const crearPedido = async (req, res) => {
         await pedido.reload({
             include: [
                 {
-                    model: DetallePedido,
+                    model: Usuario,
                     as: 'usuario',
                     attributes: [ 'id', 'nombre', 'email']
                 },
