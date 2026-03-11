@@ -1,13 +1,12 @@
 /**CONFIGURACION DE LA BASE DE DATOS */
 
-//importar sequelize
-const { port } = require('pg/lib/defaults');
-const { Sequelize } = require('sequelize')
+//importar sequelize permite trabajar directamente con mysql utilizando JS 
+const { sequelize } = require('sequelize')
 
 //importar dotenv para variables de entorno
 require('dotenv').config();
 
-//crear instancias de secualize
+//crear instancias de sequelize
 const sequelize =  new Sequelize(
     process.env.DB_NAME,
     process.env.DB_USER,
@@ -17,13 +16,13 @@ const sequelize =  new Sequelize(
        port:process.env.DB_PORT,
 
 
-       //configuracion de pool de conex
+       //configuracion de pool de conexiones
        //mantiene las conexiones abiertas para mejorar el rendimiento
        pool: {
-        max: 5, //numero maximo de conexiones en el pool
-        min: 0,
-        acquire:30000, //tiwmpo maximo para obtener una conexion de pool
-        idle:10000 //tiempo maximo que una conexion puede estar inactiva antes de ser liberada
+            max: 5, //numero maximo de conexiones en el pool
+            min: 0,
+            acquire:30000, //tiempo maximo para obtener una conexion de pool
+            idle:10000 //tiempo maximo que una conexion puede estar inactiva antes de ser liberada
        },
 
        //configuracion de logging
@@ -31,12 +30,12 @@ const sequelize =  new Sequelize(
        logging: process.env.NODE_ENV ==='development' ? console.log : false,
 
        //zona horaria 
-       timezone: '.05:00',//zona horaria de colombia
+       timezone: '-05:00',//zona horaria de colombia
 
        //opciones adicionales 
        define: {
         // timestamps: true crea automaticamente los campos createAt y updateAt 
-        timestramps: true,
+        timestamps: true,
 
         //underscored: true usa snake_case para nombres de las columnas 
         underscored: false,
@@ -44,13 +43,12 @@ const sequelize =  new Sequelize(
         //frazeTableName: true usa el nombre del modelo cual para la tabla
         freezeTableName: true
        }
-
-
-
     }
 );
 
-/* Funcion para probar la conexion de la base de datos esta funcion se llamara al iniciar el servidor */
+/* Funcion para probar la conexion de la base de datos 
+esta funcion se llamara al iniciar el servidor
+ */
 const testConnection = async () => {
     try {
         //intentar autenticar con la base de datos
@@ -68,6 +66,8 @@ const testConnection = async () => {
 /*
 /**Funcion para sincronizar los modelos con la base de datos
 * esta funcion creara las tablas automaticamente basandose en los modelos 
+
+
 * @param {bolean} force - si es true, elimina y recrea todas las tablas 
 * @param {bolean} alter - si es true, modifica las tablas existentes para que coincidan con los modelos
 */

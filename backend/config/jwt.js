@@ -1,6 +1,6 @@
 /**
  * CONFIGURACION DE JWT 
- * Este archivo configura funciones para generar y vreficar tokens JWT 
+ * Este archivo configura funciones para generar y verificar tokens JWT 
  * Los JWT se usan para autenticar usuarios sin necesidad de sesiones 
  */
 
@@ -34,8 +34,6 @@ const generateToken = (payload) => {
         console.error(' Error al generar el token JWT:', error.message);
         throw new Error('Error al generar token JWT de autenticacion');
     }
-
-    
 };
 
 /**
@@ -52,7 +50,8 @@ const verifyToken = (Token) => {
         //Paramentros: 
         //1. token: el token JWT a vetificar 
         //2. secret: la misma clave secreta usada para firmarlo 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(Token, process.env.JWT_SECRET);
+        
         return decoded;
     } catch (error)
      {
@@ -90,7 +89,7 @@ const extractToken = (authHeader) => {
 };
 
 //Exportar las funciones para usarlas en otros archivos 
-module .exports = {
+module.exports = {
     generateToken,
     verifyToken,
     extractToken

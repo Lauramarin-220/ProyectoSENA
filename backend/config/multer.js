@@ -9,7 +9,7 @@
 const multer = require('multer');
 
 // impotar path para trabajar con rutas de archivos
-const path = require('path');
+const path = require('path'); //Crea los nombres de arichivos
 
 //impotar fs para vereficar /crear directorios 
 const fs = require('fs');
@@ -76,15 +76,15 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
 
   // Tiempos Mime permitidos para imagenes
-   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
 
    //Verificar si el tipo del archivo esta en la lista permitida
    if (allowedTypes.includes(file.mimetype)) {
-  // cb(null, true) -> aceptar el archivo
-  cb(null, true);
+    // cb(null, true) -> aceptar el archivo
+    cb(null, true);
  } else {
-  // cb(error)-> recharzar el archivo 
-  cb(new Error('Solo se permite imagenes (jpg, jpeg, png, gif)'), false);
+    // cb(error)-> recharzar el archivo 
+    cb(new Error('Solo se permite imagenes (jpg, jpeg, png, gif)'), false);
  }
 };
 
@@ -107,25 +107,24 @@ const upload = multer({
  * Funcion para eliminar el archivo del servidor 
  * Util cuando se actualiza o elimina un producto y se necesita eliminar la imagen asociada 
  * 
- * @param {strig} filename - nombre del archivo a eliminar
+ * @param {Strig} filename - nombre del archivo a eliminar
  * @return {Boolean} - true si se elimino correctamente, false si no se pudo eliminar
  */
 
 const deleteFile = (filename) => {
   try {
     // Construir la ruta completa del archivo
-    const flePath = path.join(uploadPath, filename);
+    const filePath = path.join(uploadPath, filename);
 
     // verificar si el archivo existe
     if (fs.existsSync(filePath)) {
-      //Eliminar el archivo
-      fs.unlinkSync(filePath);
-       console.log(`Archivo eliminado: ${filename}`);
-      return true;
+        //Eliminar el archivo
+        fs.unlinkSync(filePath);
+        console.log(`Archivo eliminado: ${filename}`);
+        return true;
     } else {
-      console.log(`Archivo no encontrado: ${filename}`);
-      return false;
-
+        console.log(`Archivo no encontrado: ${filename}`);
+        return false;
     }
 } catch (error) {
     console.error('Error al eliminar el archivo:', error.message);

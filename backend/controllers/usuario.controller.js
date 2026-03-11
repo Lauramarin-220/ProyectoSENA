@@ -26,19 +26,12 @@ const getUsuarios = async (req, res) => {
     try {
         const { rol, activo, buscar, pagina = 1, limite = 10 } = req.query;
 
-        // Opciones de consulta
-        const opciones = {
-            order: [['nombre', 'ASC']] //ordenar de manera alfabetica
-        };
-
         //Construir los filtros 
         const where = {};
-        if (rol) {
-            where.rol = rol;
-        }
+        if (rol) where.rol = rol;
         if (activo !== undefined) where.activo = activo === 'true';
 
-        //Busqued por texto
+        //Busqueda por texto
         if (buscar) {
             const { Op } = requiere('sequelize');
             where[Op.or] = [
@@ -216,10 +209,10 @@ const crearUsuario = async (req, res) => {
 const actualizarUsuario = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre, apellido, email, password, rol, telefono, direccion } = req.body;
+        const { nombre, apellido, rol, telefono, direccion } = req.body;
 
         //Buscar usuario
-       const usuario = await Usuario.findByPK(id);
+       const usuario = await Usuario.findByPk(id);
 
        if(!usuario) {
         return res.status(404).json({
@@ -252,7 +245,7 @@ const actualizarUsuario = async (req, res) => {
             success: true,
             message: 'usuario actualizada exitosamnete',
             data: {
-                usuario
+                usuario: usuario.toJSON()
             }
         });
 
@@ -278,7 +271,7 @@ const toggleUsuario = async (req, res) =>{
     const { id } = req.params;
 
         //Buscar usuario
-        const usuario = await Usuario.findByPK(id);
+        const usuario = await Usuario.findByPk(id);
 
         if(!usuario) {
             return res.status(404).json({
@@ -288,7 +281,7 @@ const toggleUsuario = async (req, res) =>{
         }
 
         //NO permitir desactivar el propio admin
-        if (usuario-id === req.usuario.id) {
+        if (usuario.id === req.usuario.id) {
             return res.status(400).json({
                 success: false,
                 message: 'No puedes desactivar tu propia cuenta'
@@ -329,7 +322,7 @@ const eliminarUsuario = async (req,res) => {
         const { id } = req.params;
 
         //Buscar usuario
-        const usuario = await Usuario.findByPK(id);
+        const usuario = await Usuario.findByPk(id);
 
         if(!usuario) {
             return res.status(404).json({

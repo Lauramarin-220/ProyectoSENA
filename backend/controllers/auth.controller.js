@@ -8,7 +8,7 @@
  */
 
 const Usuario = require('../models/Usuario');
-const { generarToken } = require('../config/jwt');
+const { generateToken } = require('../config/jwt');
 
 /**
  * obtener todas los usuarios
@@ -78,7 +78,7 @@ const Registrar = async (req, res) => {
         });
 
         //Generar token JWT
-        const token = generarToken({ id: 
+        const token = generateToken({ id: 
             nuevoUsuario.id, 
             email: nuevoUsuario.email, 
             rol: nuevoUsuario.rol 
@@ -87,6 +87,8 @@ const Registrar = async (req, res) => {
         //Respuesta exitosa
         const UsuarioRespuesta = nuevoUsuario.toJSON();
         delete UsuarioRespuesta.password; //Eliminar el campo de contraseña de la respuesta 
+
+        //Respuesta exitosa
         res.status(201).json({
             success: true,
             message: 'Usuario registrado exitosamente',

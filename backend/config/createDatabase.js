@@ -20,9 +20,9 @@ const createDatabase = async () => {
     //conectar a MySQL sin especificar la base de datos
     console.log('Conectando a MySQL ...');
     connection = await mysql.createConnection({
-        host: process.env.DB_HOST || 'localhost',
-        port: process.env.DB_PORT || 3306,
-        user: process.env.DB_USER || 'root',
+        host: process.env.DB_HOST || 'localhost', // XAPPM
+        port: process.env.DB_PORT || 3306, // MySQL en XAMPP suele ser 3306 el puerto
+        user: process.env.DB_USER || 'root', // Nombre de defecto en MySQL
         password: process.env.DB_PASSWORD || ''
     });
    
@@ -52,7 +52,6 @@ const createDatabase = async () => {
    }
 
     process.exit(1);
-
    }
 };
 

@@ -34,6 +34,7 @@ const crearPedido = async (req, res) => {
             });
         }
         //Validacion 2 Telefono requerida
+        // TRIM quitar espacios
         if (!Telefono || Telefono.trim() ===  '') {
             await t.rollback();
             return res.status(400).json ({
@@ -52,9 +53,9 @@ const crearPedido = async (req, res) => {
         }
 
         //Obtener items del carrito
-        const carritoItems = await CarritofindAll({
+        const itemsCarrito = await Carrito.findAll({
             where: {
-                usuarioId: req.usuario.id
+                usuarioId: req.usuario.usuarioId
             },
             includes: [{
                 model: Producto,
@@ -119,6 +120,7 @@ const crearPedido = async (req, res) => {
         //Crear detalles del pedido y actualizar stock
 
         const detallesPedido = [];
+
         for (const item of itemsCarrito) {
             const producto = item.producto;
 
@@ -135,7 +137,7 @@ const crearPedido = async (req, res) => {
 
             //Reducir stock del producto
             producto.stock -= item.cantidad;
-            await producto.save({ transaction: t});
+            await producto.save({ transaction: t });
         }
 
         //vaciar carrito
