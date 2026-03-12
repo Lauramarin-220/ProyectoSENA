@@ -18,7 +18,7 @@ const Usuario = require('../models/Usuario');
 const verificarAuth = async (req, res, next) => {
     try {
         //Paso 1 obtener el token del header authorization
-        const authHeader = req.header = req.headera.authorization;
+        const authHeader = req.header = req.headers.authorization;
 
         if (!authHeader) {
             return res.status(401). json({
@@ -40,8 +40,7 @@ const verificarAuth = async (req, res, next) => {
         //Paso 2 verificar el token 
         let decoded; //Funcion para decoodificar el token 
         try {
-            decoded = verifyToken(token);
-
+            decoded = verifyToken(token); 
         } catch (error) {
             return res.status(401).json({
                 success: false,
@@ -62,7 +61,6 @@ const verificarAuth = async (req, res, next) => {
         }
 
         // paso 4 verificar que el usuario este activo
-
         if (!usuario.activo) {
             return res.status(401).json({
                 success: false,
@@ -93,7 +91,7 @@ const verificarAuth = async (req, res, next) => {
  */
 const verificarAuthOpcional = async (req, res, next) => {
     try {
-        const authHeader = req.header.authorization;
+        const authHeader = req.headers.authorization;
 
         // Si no hay token continuar sin autenticar
         if (!authHeader) {

@@ -44,7 +44,7 @@ const getCarrito = async (req, res) => {
         });
 
         //Calcular total del carrito
-        const totalCarrito = 0;
+        let total = 0;
         itemsCarrito.forEach (item => {
             total += parseFloat(item.precioUnitario) * item.cantidad;
         });
@@ -57,17 +57,17 @@ const getCarrito = async (req, res) => {
                 resumen: {
                     totalItems: itemsCarrito.length,
                     cantidadTotal: itemsCarrito.reduce((sum, item) => sum + item.cantidad, 0),
-                    totalCarrito: totalCarrito.toFixed(2)
+                    total: total.toFixed(2)
                 }
             }
-        })
+        });
     } catch (error) {
         console.error('Error en getCarrito:', error);
         res.status(500).json({
             success: false,
             message: 'Error al obtener el carrito',
             error: error.message  
-        })
+        });
     }
 };
 
@@ -90,8 +90,8 @@ const agregarAlCarrito = async (req, res) => {
             }
 
             //Validacion 2: cantidad valida
-        const cantidadNUm = parseInt(cantidad);
-            if (cantidadNUm < 1) {
+        const cantidadNum = parseInt(cantidad);
+            if (cantidadNum < 1) {
                 return res.status(400).json({
                     success: false,
                     message: 'La cantidad debe ser al menos 1'
@@ -125,7 +125,7 @@ const agregarAlCarrito = async (req, res) => {
 
             if (itemExistente) {
                 //Actualizar la cantidad
-                const nuevaCantidad = itemExistente.cantidad + cantidadNUm; 
+                const nuevaCantidad = itemExistente.cantidad + cantidadNum; 
                 
                 //validar stock disponible
                 if (nuevaCantidad > producto.stock) {
@@ -157,7 +157,7 @@ const agregarAlCarrito = async (req, res) => {
             }
 
             //Validacion 5: verificar stock disponible
-            if (cantidadNUm > producto.stock) {
+            if (cantidadNum > producto.stock) {
                 return res.status(400).json({
                     success: false,
                     message: `Stock insuficiente. Disponible: ${producto.stock}`
@@ -167,7 +167,7 @@ const agregarAlCarrito = async (req, res) => {
                 const nuevoItem = await Carrito.create({
                     usuarioId: req.usuario.id,
                     productoId,
-                    cantidad: cantidadNUm,
+                    cantidad: cantidadNum,
                     precioUnitario: producto.precio
                 });
 
@@ -221,7 +221,7 @@ const actualizarItemCarrito = async (req, res) => {
         }
 
         //Buscar item del carrito
-        const itemCarrito = await Carrito.findOne ({
+        const item = await Carrito.findOne ({
             where: {
                 id,
                 usuarioId: req.usuario.id // solo puede modificar su propio carrito
@@ -279,7 +279,7 @@ const eliminarItemCarrito = async (req, res) => {
         const { id } = req.params;
         
         // Buscar item del carrito
-        const itemCarrito = await Carrito.findOne ({
+        const item = await Carrito.findOne ({
             where: {
                 id: id,
                 usuarioId: req.usuario.id 

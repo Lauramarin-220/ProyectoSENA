@@ -6,7 +6,7 @@ const express = require('express');
 const router = express.Router();
 
 // importar los mddlewares 
-const { verifyAuth } = require('../middleware/auth');
+const { verificarAuth } = require('../middleware/auth');
 const { esAdministrador, esAdminOAuxiliar, soloAdministrador } = require('../middleware/checkRole');
 
 // importar configuracion de multer para la subida de imagenes
@@ -20,7 +20,7 @@ const usuarioController = require('../controllers/usuario.controller');
 const pedidoController = require('../controllers/pedido.controller');
 
 // restricciones de aacceso a las rutas admin
-router.use(verifyAuth, esAdminOAuxiliar);
+router.use(verificarAuth, esAdminOAuxiliar);
 
 // Rutas de categorias
 // GET/ api/admin/categorias

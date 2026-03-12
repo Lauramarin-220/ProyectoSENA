@@ -13,20 +13,19 @@ const { sequelize } = require('../config/database');
 
 /**
  * Define el modelo de Producto 
- * 
  */
 
 const Producto = sequelize.define('Producto', {
     //Campos de la tabla 
     //Id identificador unico (PRIMARE KEY)
     id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.INTEGER, // dato tipo INT en MySQL
         primaryKey: true,
         autoIncrement: true,
         allowNull: false
     },
 
-    nombre:{
+    nombre: {
         type: DataTypes.STRING(200),
         allowNull: false,
         validate:{
@@ -85,8 +84,8 @@ const Producto = sequelize.define('Producto', {
      * la ruta seria /uploads/coca-cola-producto.jpg
      */
      imagen: {
-        type: DataTypes.STRING(255),
-        alloNull: true, // la imagen es opcional
+        type: DataTypes.STRING(255), // se coloca STRING por la ruta 
+        allowNull: true, // la imagen es opcional
         validate: {
             is: {
                 args: /\.(jpg|jpeg|png|gif)$/i, // solo permite archivos con estas extensiones
@@ -108,7 +107,7 @@ const Producto = sequelize.define('Producto', {
             key: 'id', // campo de la tabla relacionada
         },
         onUpdate: 'CASCADE', // Si se actualiza el id, actualizar aca tambien 
-        onDelete: 'CASCADE', // si se elimina la categoria las subcategorias 
+        onDelete: 'CASCADE', // si se elimina la categoria eliminar las subcategorias 
         validate: {
             notNull: {
                 msg: 'Debe seleccionar a una subcategoria'
@@ -119,7 +118,6 @@ const Producto = sequelize.define('Producto', {
     /**
      * categoriaId - ID de la categoria a la que pertenece (FOREGIN KEY)
      * Esta es la relacion con la tabla categoria 
-     *
      */
     categoriaId: {
         type: DataTypes.INTEGER,
@@ -151,7 +149,7 @@ const Producto = sequelize.define('Producto', {
 }, {
     //opciones del modelo
     tableName: 'productos', 
-    timestamps: true, // agrega campos createdAt y updatedAt
+    timestamps: true, // agrega campos createdAt y updatedAt, crea la hora de creacion y actualizacion del producto
 
     /**
      * indices compuestos para optimizar busquedas
@@ -193,7 +191,7 @@ const Producto = sequelize.define('Producto', {
             const Subcategoria = require('./Subcategoria');
 
             //Buscar subcategoria padre
-            const subcategoria = await subcategoria.findByPk(producto.subcategoriaId);
+            const subcategoria = await Subcategoria.findByPk(producto.subcategoriaId);
 
             if (!subcategoria){
                 throw new Error('La subcategoria seleccionada no existe');
@@ -262,7 +260,7 @@ Producto.prototype.obtenerUrlImagen = function() {
  * @param {number} cantidad - Cantidad deseada 
  * @return {boolean} - True si hay stock suficiente, false si no
  */
-Producto.prototype.hayStockDisponible = function (cantidad = 3) {
+Producto.prototype.hayStock = function (cantidad = 3) {
     return this.stock >= cantidad;
 };
 

@@ -23,11 +23,12 @@ const esAdministrador = (req, res, next) => {
 
         // el usuario es administrador continuar
         next();
+
     } catch (error) {
-        console.error('Error en el mddleware de verificacion de rol de administador', error);
+        console.error('Error en el mddleware de verificacion EsAdministrador', error);
         return res.status(500).json({
             success: false,
-            message: 'Error en la verificacion de rol',
+            message: 'Error en la verificacion permisos',
             error: error.message
         });
     }
