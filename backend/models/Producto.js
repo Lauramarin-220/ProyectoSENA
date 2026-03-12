@@ -223,7 +223,7 @@ const Producto = sequelize.define('Producto', {
          * Elimina la imagen del servidor si existe
          */
 
-        BeforeDestroy: async (producto) => {
+        beforeDestroy: async (producto) => {
             if (producto.imagen) {
                 const { deleteFile } = require('../config/multer');
                 // intenta eliminar la imagen del servidor

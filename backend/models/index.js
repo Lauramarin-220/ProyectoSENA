@@ -156,8 +156,8 @@ Pedido.hasMany(DetallePedido, {
 });
 
 DetallePedido.belongsTo(Pedido, {
-    foreignKey: 'pedidosId', // Campo que conecta las tablas
-    as: 'pedidos', // Alias para la relacion
+    foreignKey: 'pedidoId', // Campo que conecta las tablas
+    as: 'pedido', // Alias para la relacion
     onDelete: 'CASCADE', // Si se elimina pedido se elimina el detalles de producto
     onUpdate: 'CASCADE', // Si se actualiza pedido actualizar el detalles de producto
 });
@@ -187,18 +187,19 @@ DetallePedido.belongsTo(Producto, {
  * pedido y productos tiene una relacion de N a N atravez de detalle de pedido
  */
 
-Pedido.hasMany(Producto, {
-    through: DetallePedido,  // tabla intermedia
-    foreignKey: 'pedidoId', //Primer campo que va a relacionar y que conecta las tablas
-    otherKey: 'producto',  //campos que conecta las tablas
-    as: 'productos', // Alias para la relacion
+// Pedido <-> Producto: relación N:M a través de DetallePedido
+Pedido.belongsToMany(Producto, {
+    through: DetallePedido,
+    foreignKey: 'pedidoId',
+    otherKey: 'productoId',
+    as: 'productos',
 });
 
-Producto.hasMany(Pedido, {
-    through: DetallePedido, // Campo que conecta las tablas
-    foreignKey: 'productoId', //Primer campo que va a relacionar y que conecta las tablas
-    otherKey: 'pedidoId',  //campos que conecta las tablas
-    as: 'Pedidos', // Alias para la relacion
+Producto.belongsToMany(Pedido, {
+    through: DetallePedido,
+    foreignKey: 'productoId',
+    otherKey: 'pedidoId',
+    as: 'pedidos',
 });
 
 /**

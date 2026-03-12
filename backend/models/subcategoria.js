@@ -168,7 +168,7 @@ const Subcategoria = sequelize.define('Subcategoria', {
  * @returns {Promise<number>} -numero de productos
  */
 
-subcategoria.prototype.contarProductos = async function() {
+Subcategoria.prototype.contarProductos = async function() {
    const Producto = require('./Producto');
    return await Producto.count({ where: { subcategoriaId: this.id } });
 };
@@ -178,7 +178,7 @@ subcategoria.prototype.contarProductos = async function() {
  * 
  * @returns {Promise<Categoria>} - categoria padre 
  */
-subcategoria.prototype.obtenerCategoria = async function() {
+Subcategoria.prototype.obtenerCategoria = async function() {
    const Categoria = require('./Categoria'); 
    return await Categoria.findByPk(this.categoriaId);
 }

@@ -1,20 +1,20 @@
 /**CONFIGURACION DE LA BASE DE DATOS */
 
-//importar sequelize permite trabajar directamente con mysql utilizando JS 
-const { sequelize } = require('sequelize')
+//importar la clase Sequelize para trabajar con mysql usando JS
+const { Sequelize } = require('sequelize');
 
 //importar dotenv para variables de entorno
 require('dotenv').config();
 
 //crear instancias de sequelize
-const sequelize =  new Sequelize(
+const sequelize = new Sequelize(
     process.env.DB_NAME,
     process.env.DB_USER,
     process.env.DB_PASSWORD,
     {
        host:process.env.DB_HOST,
        port:process.env.DB_PORT,
-
+       dialect: 'mysql',
 
        //configuracion de pool de conexiones
        //mantiene las conexiones abiertas para mejorar el rendimiento

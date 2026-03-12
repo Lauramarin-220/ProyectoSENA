@@ -12,7 +12,6 @@ const bcrypt = require ('bcrypt');
 
 //importar instancia de sequelize 
 const { sequelize } = require('../config/database');
-const bcrypt = require('bcryptjs/dist/bcrypt');
 
 /**
  * Define el modelo de usuario
@@ -146,11 +145,11 @@ const Usuario = sequelize.define('Usuario', {
        */
 
         beforeCreate: async (usuario) => {
-            if (uduario.password) {
+            if (usuario.password) {
                 //generar un salt (semilla aleatoria) con factor de costo de 10
                 const salt = await bcrypt.genSalt(10);
                 //Encriptar la contraseña 
-                usuario.password = await bcrypt.hash (usuario.password, salt);
+                usuario.password = await bcrypt.hash(usuario.password, salt);
             }
         },
 
@@ -159,7 +158,7 @@ const Usuario = sequelize.define('Usuario', {
          * Encriptar la contraseña si fue modificada 
          */
 
-        BeforeUpdate: async (usuario) => {
+        beforeUpdate: async (usuario) => {
             //verificar si la contraseña fue modificada
             if (usuario.changed('password')) {
                 const salt = await bcrypt.genSalt(10);

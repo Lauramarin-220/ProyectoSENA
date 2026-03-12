@@ -17,7 +17,7 @@ const path = require('path');
 require('dotenv').config();
 
 //importar configuracion de la base de datos 
-const dbConfig = require('./config/database');
+const { testConnection, syncDataBase } = require('./config/database');
 
 // importar modelo y asociaciones
 const { initAssociations } = require('./models');
@@ -169,7 +169,7 @@ const startServer = async () => {
         // en desarrollo alter puede ser true para actualizar la extructura
         // en produccion debe ser false para no perder datos
         const alterTables = process.env.NODE_ENV === 'development';
-        const dbSynced = await syncDatabase(false, alterTables);
+        const dbSynced = await syncDataBase(false, alterTables);
 
         if (!dbSynced) {
             console.error('X error al sincronizar la base de datos');

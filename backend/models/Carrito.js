@@ -120,10 +120,10 @@ const Carrito = sequelize.define('Carrito', {
          * valida que este esta activo y tenga stock suficiente 
          */
         beforeCreate: async (itemCarrito) => {
-            const Producto = require('./Categoria');
+            const Producto = require('./Producto');
 
             //Buscar el producto 
-            const producto  = await Producto.findByPk(itemCarrito.productoId);
+            const producto  = await Producto.findByPk(itemCarrito.ProductoId);
 
             if (!producto){
                 throw new Error('El producto no existe');
@@ -143,15 +143,15 @@ const Carrito = sequelize.define('Carrito', {
         },
 
         /**
-         * BeforeUpdate: se ejecuta antes de actualizar un carrito
+         * beforeUpdate: se ejecuta antes de actualizar un carrito
          * Valida que haya stock suficiente si se aumenta la cantidad 
          */
 
-        BeforeUpdate: async (itemCarrito) => {
+        beforeUpdate: async (itemCarrito) => {
             
             if (itemCarrito.changed('cantidad')) {
                 const Producto = require('./Producto');
-                const producto = await Producto.findByPk (itemCarrito.productoId);
+                const producto = await Producto.findByPk(itemCarrito.ProductoId);
 
                 if (!producto) {
                     throw new Error('El producto no existe');
