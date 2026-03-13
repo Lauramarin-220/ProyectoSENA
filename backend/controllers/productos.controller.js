@@ -62,16 +62,16 @@ const getProductos= async (req, res) => {
         // Opciones de consulta
         const opciones = {
             where,
-                incluide: [
+            include: [
                 {
                     model: Categoria,
                     as: 'categoria',
-                    attributes: ['id', 'nombre',]
+                    attributes: ['id', 'nombre']
                 },
                 {
                     model: Subcategoria,
                     as: 'subcategoria',
-                    attributes: ['id', 'nombre',]
+                    attributes: ['id', 'nombre']
                 }
             ],
             limit: parseInt(limite),
@@ -99,11 +99,11 @@ const getProductos= async (req, res) => {
 
     } catch (error) {
         console.error('Error en getProducto: ', error);
-        res.status(500).json[{
+        res.status(500).json({
             success: false,
             message: 'Error al obtener producto',
             error: error.message
-        }]
+        });;
     }
 };
 

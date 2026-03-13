@@ -38,7 +38,7 @@ const getCategorias = async (req, res) => {
 
         // Incluir subcategorias si se solicita
         if (IncluirSubcategorias === 'true') {
-            opciones.include == [{
+            opciones.include = [{
                 model: Subcategoria,
                 as: 'subcategorias', // campo del alias para la relacion 
                 attributes: [ 'id', 'nombre', 'descripcion', 'activo'] //Campos a incluir de la subcategoria
@@ -60,11 +60,11 @@ const getCategorias = async (req, res) => {
 
     } catch (error) {
         console.error('Error en getCategorias: ', error);
-        res.status(500).json[{
+        res.status(500).json({
             success: false,
             message: 'Error al obtener categorias',
             error: error.message
-        }]
+        });
     }
 };
 
@@ -80,8 +80,8 @@ const getCategoriasById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Buscar categorias con subcategorias y contar productos
-        const categoria = await Categoria. findAll( id, {
+        // Buscar categoria por id con subcategorias y contar productos
+        const categoria = await Categoria.findByPk(id, {
             include: [
                 {
                     model: Subcategoria,
@@ -119,11 +119,11 @@ const getCategoriasById = async (req, res) => {
 
     } catch (error) {
         console.error('Error en getCategoriasById: ', error);
-        res.status(500).json[{
+        res.status(500).json({
             success: false,
             message: 'Error al obtener categoria',
             error: error.message
-        }]
+        });
     }
 };
 
@@ -201,10 +201,10 @@ const crearCategoria = async (req, res) => {
 const actualizarCategoria = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre, descripcion } = req.body;
+        const { nombre, descripcion, activo } = req.body;
 
         //Buscar categoria
-       const categoria = await Categoria.findByPK(id);
+       const categoria = await Categoria.findByPk(id);
 
        if(!categoria) {
         return res.status(404).json({
@@ -276,7 +276,7 @@ const toggleCategoria = async (req, res) => {
         const { id } = req.params;
 
         //Buscar categoria
-        const categoria = await Categoria.findByPK(id);
+        const categoria = await Categoria.findByPk(id);
 
         if(!categoria) {
             return res.status(404).json({
@@ -334,7 +334,7 @@ const eliminarCategoria = async (req,res) => {
         const { id } = req.params;
 
         //Buscar categoria
-        const categoria = await Categoria.findByPK(id);
+        const categoria = await Categoria.findByPk(id);
 
         if (!categoria) {
             return res.status(404).json({
@@ -402,7 +402,7 @@ const getEstadisticasCategoria = async (req, res)  => {
         const { id } = req.params;
 
         //Verificar que la categoria exisa
-        const categoria = await Categoria.findByPK(id);
+        const categoria = await Categoria.findByPk(id);
 
         if (!categoria) {
             return res.status(404).json({

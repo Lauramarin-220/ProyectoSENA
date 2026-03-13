@@ -24,12 +24,12 @@ const Pedido = sequelize.define('pedido', {
         allowNull: false
     },
 
-    // UsuarioId del usuario que realizo el pedido 
-    UsuarioId: {
+    // usuarioId del usuario que realizo el pedido 
+    usuarioId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'Usuarios',
+            model: 'usuarios',
             key: 'id'
         },
         onUpdate: 'CASCADE',
@@ -299,14 +299,14 @@ Pedido.obtenerPorEstado = async function(estado){
     const Usuario = require ('./Usuario');
     return await this.findAll({
         where: { estado },
-        incluide: [
+        include: [
             {
                 model: Usuario,
                 as: 'usuario',
                 attributes: ['id', 'nombre', 'email', 'telefono' ]
             }
         ],
-        order: [['creatdAt', 'DESC']]
+        order: [['createdAt', 'DESC']]
     });
 };
 
@@ -318,8 +318,9 @@ Pedido.obtenerPorEstado = async function(estado){
 Pedido.obtenerHistoralusuario = async function(usuarioId){
     return await this.findAll({
         where: { usuarioId },
-        order: [['creatdAt', 'DESC']]
+        order: [['createdAt', 'DESC']]
     });
 };
+
 // Expotar modelo
 module.exports = Pedido;

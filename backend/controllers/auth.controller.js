@@ -22,7 +22,7 @@ const { generateToken } = require('../config/jwt');
 
 const Registrar = async (req, res) => {
     try {
-        const { nombre, apellido, email, password, telefono, direccion } = req.query;
+        const { nombre, apellido, email, password, telefono, direccion } = req.body;
 
         //Validacion 1 verificar que todos los campos requeridos esten presentes
         if (!nombre || !apellido || !email || !password) {
@@ -160,7 +160,7 @@ const login = async (req, res) => {
         }
 
         //Generar token JWT con datos del usuario
-        const token = generarToken({
+        const token = generateToken({
             id: usuario.id,
             email: usuario.email,
             rol: usuario.rol
@@ -251,7 +251,8 @@ const UpdateMe = async (req, res) =>{
                 message: 'Usuario no encontrado'
             });
         }
-          //Actualizar campos
+
+        //Actualizar campos
         if (nombre !== undefined) usuario.nombre = nombre;
         if (apellido !== undefined) usuario.apellido = apellido;
         if (telefono !== undefined) usuario.telefono = telefono;

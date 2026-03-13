@@ -23,7 +23,7 @@ const crearPedido = async (req, res) => {
     const t = await sequelize.transaction();
 
     try {
-        const { direccionEnvio, Telefono, metodoPago = 'efectivo', notasAdicionales } = req.body;  
+        const { direccionEnvio, telefono, metodoPago = 'efectivo', notasAdicionales } = req.body;  
         
         //Validacion 1 Direccion requerida
         if (!direccionEnvio || direccionEnvio.trim() ===  '') {
@@ -35,7 +35,7 @@ const crearPedido = async (req, res) => {
         }
         //Validacion 2 Telefono requerida
         // TRIM quitar espacios
-        if (!Telefono || Telefono.trim() ===  '') {
+        if (!telefono || telefono.trim() ===  '') {
             await t.rollback();
             return res.status(400).json ({
                 success: false,
@@ -55,9 +55,9 @@ const crearPedido = async (req, res) => {
         //Obtener items del carrito
         const itemsCarrito = await Carrito.findAll({
             where: {
-                usuarioId: req.usuario.usuarioId
+                usuarioId: req.usuario.id
             },
-            includes: [{
+            include: [{
                 model: Producto,
                 as: 'producto',
                 attributes: ['id', 'nombre', 'precio', 'stock', 'activo']
@@ -98,7 +98,7 @@ const crearPedido = async (req, res) => {
 
         //Si hay errores de validacion, retone
         if (erroresValidacion.length > 0) {
-            await t.rollbalck();
+            await t.rollback();
             return res.status(400).json ({
                 success: false,
                 message: 'Error de validacion en el carrito',
@@ -112,7 +112,7 @@ const crearPedido = async (req, res) => {
             total: totalPedido,
             estado: 'pendiente',
             direccionEnvio,
-            Telefono,
+            telefono,
             metodoPago,
             notasAdicionales
         },  { transaction: t   });
@@ -162,7 +162,7 @@ const crearPedido = async (req, res) => {
                     as: 'detalles',
                     include: [{
                         model: Producto,
-                        as: 'producto',
+                        as: 'productos',
                         attributes: ['id', 'nombre', 'precio', 'imagen']
                     }],
                 },
@@ -205,7 +205,7 @@ const getMisPedidos = async (req, res) => {
         if (estado)  where. estado = estado;
 
             //Paginacion
-            const offset = (parseInt(pagina - 1)) * parseInt (limite);
+            const offset = (parseInt(pagina) - 1) * parseInt(limite);
 
             //consultar pedido
             const { count, rows: pedidos } = await Pedido.findAndCountAll({
@@ -215,7 +215,7 @@ const getMisPedidos = async (req, res) => {
                     as: 'detalles',
                     include: [{
                         model: Producto,
-                        as: 'producto',
+                        as: 'productos',
                         attributes: [ 'id', 'nombre', 'precio', 'imagen']
                     }]
                 }
@@ -259,7 +259,7 @@ const getPedidoById = async (req, res) => {
                 const { id } = req.params;
                 //construir filtros (cliente solo ve sus pedidos, admin ve todos)
                 const where = { id };
-                if (req.usuario.rol === 'administrador') {
+                if (req.usuario.rol !== 'administrador') {
                     where.usuarioId = req.usuario.id;
                 }
 
@@ -277,7 +277,7 @@ const getPedidoById = async (req, res) => {
                     as: 'detalles',
                     include: [{
                         model: Producto,
-                        as: 'producto',
+                        as: 'productos',
                         attributes: [ 'id', 'nombre', 'descripcion', 'imagen'],
                         include: [
                         {
@@ -328,7 +328,7 @@ const getPedidoById = async (req, res) => {
  */
 
 const cancelarPedido = async (req, res) => {
-    const { sequelize } = requiere('../config/database');
+    const { sequelize } = require('../config/database');
     const t = await sequelize.transaction();
 
     try {
@@ -345,14 +345,14 @@ const cancelarPedido = async (req, res) => {
                     as: 'detalles',
                     include: [{
                         model: Producto,
-                        as: 'producto'
+                        as: 'productos'
                     }]
                 }],
             transaction: t
         });
 
         if (!pedido) {
-            await t.rollbalck();
+            await t.rollback();
             return res.status(404).json({
                 success: false,
                 message: 'Pedido no encontrado'
@@ -360,7 +360,7 @@ const cancelarPedido = async (req, res) => {
         }
 
         // Solo se puede cancelar si esta en pendiente
-        if (pedido.estado !== 'pediente') {
+        if (pedido.estado !== 'pendiente') {
             await t.rollback();
             return res.status(400).json({
                 success: false,
@@ -432,7 +432,7 @@ const getAllPedidos = async (req, res) => {
                 as: 'detalles',
                 include: [{
                     model: Producto,
-                    as: 'producto',
+                    as: 'productos',
                     attributes: ['id', 'nombre', 'precio', 'imagen']
                 }]
             }

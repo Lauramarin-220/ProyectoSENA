@@ -33,7 +33,7 @@ const getUsuarios = async (req, res) => {
 
         //Busqueda por texto
         if (buscar) {
-            const { Op } = requiere('sequelize');
+            const { Op } = require('sequelize');
             where[Op.or] = [
                 { nombre: { [Op.like]: `%${buscar}%` } },
                 { apellido: { [Op.like]: `%${buscar}%` } },
@@ -42,7 +42,7 @@ const getUsuarios = async (req, res) => {
         }
 
         //Paginacion
-        const offset = (pagina - 1) * ParseInt(limite);
+        const offset = (pagina - 1) * parseInt(limite);
         
         //Obtener usuarios sin password
         const { count, rows: usuarios } = await Usuario.findAndCountAll({
@@ -89,7 +89,7 @@ const getUsuarioById = async (req, res) => {
         const { id } = req.params;
 
         // Buscar usuarios
-        const usuario = await Usuario. findAll( id, {
+        const usuario = await Usuario.findByPk(id, {
             attributes: { exclude: ['password']},
         });
 
@@ -111,11 +111,11 @@ const getUsuarioById = async (req, res) => {
 
     } catch (error) {
         console.error('Error en getUsuarioById: ', error);
-        res.status(500).json[{
-            sucess: false,
+        res.status(500).json({
+            success: false,
             message: 'Error al obtener usuario',
             error: error.message
-        }]
+        });
     }
 };
 

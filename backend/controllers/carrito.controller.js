@@ -19,14 +19,14 @@ const Subcategoria = require('../models/Subcategoria');
 const getCarrito = async (req, res) => {
     try {
         // Obtener items del carrito con los productos relacionados
-        const itemsCarrito = await Carrito.findAll ({
-            where: { usuarioId: req.usuario.id},
-            incluide: [
+        const itemsCarrito = await Carrito.findAll({
+            where: { usuarioId: req.usuario.id },
+            include: [
                 {
                     model: Producto,
                     as: 'producto',
                     attributes: ['id', 'nombre','descripcion', 'precio', 'stock', 'imagen', 'activo'],
-                    incluide: [
+                    include: [
                         {
                             model: Categoria,
                             as: 'categoria',
@@ -53,7 +53,7 @@ const getCarrito = async (req, res) => {
         res.json({
             success: true,
             data: {
-                items: itemsCarrito,
+                carrito: itemsCarrito,
                 resumen: {
                     totalItems: itemsCarrito.length,
                     cantidadTotal: itemsCarrito.reduce((sum, item) => sum + item.cantidad, 0),
@@ -209,7 +209,7 @@ const agregarAlCarrito = async (req, res) => {
 const actualizarItemCarrito = async (req, res) => {
     try {
         const { id } = req.params;
-        const { cantidad } = res.body;
+        const { cantidad } = req.body;
         
         //Validacion 1: cantidad
         const cantidadNum = parseInt(cantidad);

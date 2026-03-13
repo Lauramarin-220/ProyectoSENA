@@ -25,12 +25,12 @@ const Carrito = sequelize.define('Carrito', {
         allowNull: false
     },
 
-    // UsuarioId del usuario dueño del carrito 
-    UsuarioId: {
+    // usuarioId del usuario dueño del carrito 
+    usuarioId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'Usuarios',
+            model: 'usuarios',
             key: 'id'
         },
         onUpdate: 'CASCADE',
@@ -42,12 +42,12 @@ const Carrito = sequelize.define('Carrito', {
         }
     },
 
-       // ProductoId del Producto en el carrito 
-    ProductoId: {
+       // productoId del Producto en el carrito 
+    productoId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'Productos',
+            model: 'productos',
             key: 'id'
         },
         onUpdate: 'CASCADE',
@@ -123,7 +123,7 @@ const Carrito = sequelize.define('Carrito', {
             const Producto = require('./Producto');
 
             //Buscar el producto 
-            const producto  = await Producto.findByPk(itemCarrito.ProductoId);
+            const producto  = await Producto.findByPk(itemCarrito.productoId);
 
             if (!producto){
                 throw new Error('El producto no existe');
@@ -151,7 +151,7 @@ const Carrito = sequelize.define('Carrito', {
             
             if (itemCarrito.changed('cantidad')) {
                 const Producto = require('./Producto');
-                const producto = await Producto.findByPk(itemCarrito.ProductoId);
+                const producto = await Producto.findByPk(itemCarrito.productoId);
 
                 if (!producto) {
                     throw new Error('El producto no existe');

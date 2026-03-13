@@ -23,8 +23,13 @@ const { testConnection, syncDataBase } = require('./config/database');
 const { initAssociations } = require('./models');
 
 // importar seeders
-const { runSeeders } = require('./seeders/adminSeeder');
+let runSeeders = async () => {}
 
+try {
+    ({ runSeeders } = require('./seeders/adminSeeder'));
+} catch (error) {
+    console.warn('seeder de administrador no encontrado, se omite la carga inicial');
+}
 // crear aplicaciones express
 
 const app = express();
@@ -85,7 +90,7 @@ app.get('/', (req, res) => {
 });
 
 // rutas de salud verifica que el servidor como esta 
-app.get('api/health', (req, res) => {
+app.get('/api/health', (req, res) => {
     res.json({
         success: true,
         status: 'healthy',
@@ -102,13 +107,13 @@ const authRoutes = require('./routes/auth.routes');
 app.use('/api/auth', authRoutes);
 
 // rutas del admin
-//requierem autenticacion de rol de administrador
+// requieren autenticacion de rol de administrador
 const adminRoutes = require('./routes/admin.routes');
 app.use('/api/admin', adminRoutes);
 
 // rutas del cliente
 const clienteRoutes = require('./routes/cliente.routes');
-app.use('/api', clienteRoutes );
+app.use('/api/cliente', clienteRoutes );
 
 // Maneja de rutas no encontradas (404)
 
@@ -121,7 +126,7 @@ app.use((req, res) => {
 });
 
 // Maneja de errores globales 
-app.use((err, req, res) => {
+app.use((err, req, res, next) => {
     console.error('Error:', err.message);
     // Error de multer subida de archivos
     if (err.name === 'MulterError') {
@@ -173,7 +178,7 @@ const startServer = async () => {
 
         if (!dbSynced) {
             console.error('X error al sincronizar la base de datos');
-            proccess.exit(1);
+            process.exit(1);
         }
 
         // Paso 3 ejecutar seeders datos iniciales
@@ -210,8 +215,8 @@ process.on('unhandledRejection', (err) => {
     process.exit(1);
 });
 
-//Iniciar servidor
-startServer();
+// Solo iniciar servidor 
+ startServer();
 
 //Exportar app para testing 
 module.exports = app;

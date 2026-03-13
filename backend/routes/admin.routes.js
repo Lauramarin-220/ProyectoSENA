@@ -35,8 +35,8 @@ router.get('/categorias/:id/stats', categoriaController.getEstadisticasCategoria
 // POST/ api/admin/categorias
 router.post('/categorias', categoriaController.crearCategoria);
 
-// PUT/ api/admin/categorias
-router.put('/categorias', categoriaController.actualizarCategoria);
+// PUT/ api/admin/categorias/:id
+router.put('/categorias/:id', categoriaController.actualizarCategoria);
 
 // PATCH/ api/admin/categorias/:id/toggle desactivar o activar categoria
 router.patch('/categorias/:id/toggle', categoriaController.toggleCategoria);
@@ -81,8 +81,8 @@ router.get('/productos', productoController.getProductos);
 // GET/ api/admin/productos/:id
 router.get('/productos/:id', productoController.getProductosById);
 
-// PUT/ api/admin/productos
-router.put('/productos', productoController.actualizarProducto);
+// PUT/ api/admin/productos/:id
+router.put('/productos/:id', productoController.actualizarProducto);
 
 // PATCH/ api/admin/productos/:id/toggle desactivar o activar productos
 router.patch('/productos/:id/toggle', productoController.toggleProducto);
@@ -98,7 +98,7 @@ router.delete('/productos/:id', soloAdministrador,productoController.eliminarPro
 router.get('/usuarios/:id/stats', usuarioController.getEstadisticasUsuarios);
 
 // POST/ api/admin/usuarios
-router.post('/usuarios', usuarioController.crearUsuario);
+router.post('/usuarios', soloAdministrador, usuarioController.crearUsuario);
 
 // GET/ api/admin/usuarios
 router.get('/usuarios', usuarioController.getUsuarios);
@@ -106,8 +106,8 @@ router.get('/usuarios', usuarioController.getUsuarios);
 // GET/ api/admin/usuarios/:id
 router.get('/usuarios/:id', usuarioController.getUsuarioById);
 
-// PUT/ api/admin/usuarios
-router.put('/usuarios', soloAdministrador,usuarioController.actualizarUsuario);
+// PUT/ api/admin/usuarios/:id
+router.put('/usuarios/:id', soloAdministrador, usuarioController.actualizarUsuario);
 
 // PATCH / api/admin/usuarios/:id/toggle desactivar o activar productos
 router.patch('/usuarios/:id/toggle', usuarioController.toggleUsuario);

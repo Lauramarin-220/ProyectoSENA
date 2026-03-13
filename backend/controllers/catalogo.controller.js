@@ -63,7 +63,7 @@ const getProductos= async (req, res) => {
 
        //Ordenamiento
        let order;
-       switch (order) {
+       switch (orden) {
         case 'precio_asc':
             order = [['precio', 'ASC']];
             break;
@@ -79,27 +79,27 @@ const getProductos= async (req, res) => {
        }
 
        //Paginacion
-       const offset = (parseInt(pagina) -1) *parseInt(limite);
+       const offset = (parseInt(pagina) -1) * parseInt(limite);
 
         // consultar productos 
         const opciones = { count, rows: productos } = await Producto.findAndCountAll({
-                incluide: [
+                include: [
                     {
                     model: Categoria,
                     as: 'categoria',
-                    attributes: ['id', 'nombre',],
-                    where: { activo: true}
+                    attributes: ['id', 'nombre'],
+                    where: { activo: true }
                 },
                 {
                     model: Subcategoria,
                     as: 'subcategoria',
-                    attributes: ['id', 'nombre',],
+                    attributes: ['id', 'nombre'],
                     where: { activo: true }
-                },
+                }
             ],
             limit: parseInt(limite),
             offset,
-            order: [['nombre', 'ASC']] // Ordenar de manera alfabetica 
+            order: order || [['nombre', 'ASC']] // Ordenamiento predeterminado
         });
 
         //Respuesta exitosa
@@ -118,11 +118,11 @@ const getProductos= async (req, res) => {
 
     } catch (error) {
         console.error('Error en getProductos: ', error);
-        res.status(500).json[{
+        res.status(500).json({
             success: false,
             message: 'Error al obtener producto',
             error: error.message
-        }]
+        });
     }
 };
 
@@ -138,8 +138,8 @@ const getProductosById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        //Buscar productos activo y stock 
-        const producto = await Producto.findAll({
+        //Buscar producto activo
+        const producto = await Producto.findOne({
             where: {
                 id,
                 activo: true
@@ -177,11 +177,11 @@ const getProductosById = async (req, res) => {
 
     } catch (error) {
         console.error('Error en getProductosById: ', error);
-        res.status(500).json[{
+        res.status(500).json({
             success: false,
             message: 'Error al obtener productos',
             error: error.message
-        }]
+        });
     }
 };
 
@@ -231,11 +231,11 @@ const getCategorias = async (req, res) => {
 
     } catch (error) {
         console.error('Error engetCategorias: ', error);
-        res.status(500).json[{
+        res.status(500).json({
             success: false,
             message: 'Error al obtener categorias',
             error: error.message
-        }]
+        });
     }
 };
 
@@ -306,11 +306,11 @@ const getSubcategoriasPorCategoria = async (req, res) => {
 
     } catch (error) {
         console.error('Error en getSubcategoriasPorCategorias: ', error);
-        res.status(500).json[{
+        res.status(500).json({
             success: false,
             message: 'Error al obtener subcategorias',
             error: error.message
-        }]
+        });
     }
 };
 
@@ -361,11 +361,11 @@ const getProductosDestacados = async (req, res) => {
 
     } catch (error) {
         console.error('Error en getProductosDestacados: ', error);
-        res.status(500).json[{
+        res.status(500).json({
             success: false,
             message: 'Error al obtener productos destacados',
             error: error.message
-        }]
+        });
     }
 };
 

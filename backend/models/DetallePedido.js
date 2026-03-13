@@ -31,7 +31,7 @@ const DetallePedido = sequelize.define('DetallePedido', {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'Pedidos',
+            model: 'pedidos',
             key: 'id'
         },
         onUpdate: 'CASCADE',
@@ -43,16 +43,16 @@ const DetallePedido = sequelize.define('DetallePedido', {
         }
     },
 
-    // ProductoId del Producto en el carrito  
-    ProductoId: {
+    // productoId del Producto en el carrito  
+    productoId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'Productos',
+            model: 'productos',
             key: 'id'
         },
         onUpdate: 'CASCADE',
-        onDelete: 'RESTRIC', // no se puede eliminar producto con pedidos 
+        onDelete: 'RESTRICT', // no se puede eliminar producto con pedidos 
         validate: {
             notNull: {
                 msg: 'Debe especificar un producto'
