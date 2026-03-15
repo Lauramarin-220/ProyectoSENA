@@ -31,7 +31,7 @@ const getCategorias = async (req, res) => {
             order: [['nombre', 'ASC']] //ordenar de manera alfabetica
         };
 
-        //Filtrar por estado activo si es especifica
+        //Filtrar por estado activo si es esoecifica
         if (activo !== undefined) {
             opciones.where = { activo: activo === 'true' };
         }
@@ -64,7 +64,7 @@ const getCategorias = async (req, res) => {
             success: false,
             message: 'Error al obtener categorias',
             error: error.message
-        });
+        })
     }
 };
 
@@ -80,7 +80,7 @@ const getCategoriasById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Buscar categoria por id con subcategorias y contar productos
+        // Buscar categorias con subcategorias y contar productos
         const categoria = await Categoria.findByPk(id, {
             include: [
                 {
@@ -123,7 +123,7 @@ const getCategoriasById = async (req, res) => {
             success: false,
             message: 'Error al obtener categoria',
             error: error.message
-        });
+        })
     }
 };
 
@@ -201,7 +201,7 @@ const crearCategoria = async (req, res) => {
 const actualizarCategoria = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre, descripcion, activo } = req.body;
+        const { nombre, descripcion } = req.body;
 
         //Buscar categoria
        const categoria = await Categoria.findByPk(id);
@@ -215,8 +215,7 @@ const actualizarCategoria = async (req, res) => {
 
         // validacion 1 si se cambia el nombre verificar que no exista 
         if (nombre && nombre !== categoria.nombre) {
-            const categoriaConMismoNombre = await Categoria.findOne({ where: { nombre}
-            });
+            const categoriaConMismoNombre = await Categoria.findOne({ where: { nombre } });
 
             if (categoriaConMismoNombre) {
                 return res.status(400).json({
@@ -229,7 +228,6 @@ const actualizarCategoria = async (req, res) => {
         //Actualizar campos
         if (nombre !== undefined) categoria.nombre = nombre;
         if (descripcion !== undefined) categoria.descripcion = descripcion;
-        if (activo !== undefined) categoria.activo = activo;
 
         //guardar cambios
         await categoria.save();

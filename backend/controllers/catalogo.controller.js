@@ -83,6 +83,7 @@ const getProductos= async (req, res) => {
 
         // consultar productos 
         const opciones = { count, rows: productos } = await Producto.findAndCountAll({
+                where: where,
                 include: [
                     {
                     model: Categoria,
@@ -99,7 +100,7 @@ const getProductos= async (req, res) => {
             ],
             limit: parseInt(limite),
             offset,
-            order: order || [['nombre', 'ASC']] // Ordenamiento predeterminado
+            order: order
         });
 
         //Respuesta exitosa

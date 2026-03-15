@@ -1,8 +1,7 @@
 /**
  * Controlador de usuarios ADMIN
- * maneja las gestiones de usuarios por administradores
- * lista de usuarios activa / desactivar cuentas
- * solo accesible por adminitradores
+ * maneja la gestion de usuarios por administrador
+ * sLista de usuarios activa / desactivar cuentas
  */
 
 /**
@@ -12,9 +11,10 @@
 const Usuario = require('../models/Usuario');
 
 
+
 /**
- * obtener todas los usuarios
- * GET/ api/usuarios
+ * obtener todaos los usuarios
+ * GET /api/usuarios
  * query params:
  * Activo true/false (filtrar por estado)
  * 
@@ -24,9 +24,9 @@ const Usuario = require('../models/Usuario');
 
 const getUsuarios = async (req, res) => {
     try {
-        const { rol, activo, buscar, pagina = 1, limite = 10 } = req.query;
+        const { rol, activo, buscar, pagina = 1, limite = 10 } = req.query
 
-        //Construir los filtros 
+        // Construir los filtros
         const where = {};
         if (rol) where.rol = rol;
         if (activo !== undefined) where.activo = activo === 'true';
@@ -42,18 +42,18 @@ const getUsuarios = async (req, res) => {
         }
 
         //Paginacion
-        const offset = (pagina - 1) * parseInt(limite);
-        
+        const offset = (parseInt(pagina) -1) * parseInt(limite);
+
         //Obtener usuarios sin password
         const { count, rows: usuarios } = await Usuario.findAndCountAll({
             where,
             attributes: { exclude: ['password'] },
             limit: parseInt(limite),
             offset,
-            order: [['createdAt', 'DESC']] 
+            order: [['createdAt', 'DESC']]
         });
 
-        //RESPUESTA EXITOSA
+        //Respuesta exitosa
         res.json({
             success: true,
             data: {
@@ -62,23 +62,24 @@ const getUsuarios = async (req, res) => {
                     total: count,
                     pagina: parseInt(pagina),
                     limite: parseInt(limite),
-                    totalPaginas: Math.ceil(count / parseInt(limite))
+                    totalPaginas: Math.ceil(count /parseInt(limite))
                 }
             }
         });
-        } catch (error) {
-            console.error('Error en getUsuarios: ', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error al obtener usuarios',
-                error: error.message
-            });
-        }
-    };
+    } catch (error) {
+        console.error('Error al getUsuarios: ', error),
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener usuarios',
+            error: error.message
+        });
+    }
+};
+
 
 /**
- * obtener usuario por id
- * GET /api/admin/usuarios/:id
+ * obtener un usuario por id
+ * GET /api/admin/usuarioss/:id
  * 
  * @param {Object} req request Express
  * @param {Object} res response Express
@@ -88,15 +89,15 @@ const getUsuarioById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Buscar usuarios
-        const usuario = await Usuario.findByPk(id, {
-            attributes: { exclude: ['password']},
+        // Buscar usuarios 
+        const usuario = await Usuario.findByPk( id, {
+            attributes: { exclude: ['password'] },
         });
 
         if (!usuario) {
             return res.status(404).json({
                 success: false,
-                message: 'usuario no encontrado'
+                message: 'Usuario no encontrada'
             });
         }
 
@@ -112,16 +113,16 @@ const getUsuarioById = async (req, res) => {
     } catch (error) {
         console.error('Error en getUsuarioById: ', error);
         res.status(500).json({
-            success: false,
+            sucess: false,
             message: 'Error al obtener usuario',
             error: error.message
-        });
+        })
     }
 };
 
 /**
  * Crear nuevo usuario
- * POST 7api/admin/usuarios
+ * POST /api/admin/usuarios
  * Body: { nombre, apellido, email, password, rol, telefono, direccion }
  * @param {Object} req request Express
  * @param {Object} res response Express
@@ -139,30 +140,29 @@ const crearUsuario = async (req, res) => {
             });
         }
 
-        //validar rol
+        // Validar rol
         if (!['cliente', 'auxiliar', 'administrador'].includes(rol)) {
             return res.status(400).json({
-                success: false, 
-                message: 'Rol invalido. debe ser: cliente, auxiliar o administrador'
+                success: false,
+                message: 'Rol invalido. Debe ser: cliente, auxiliar, administrador'
             })
         }
 
-        // Validar email unico
+        //validar email unico
         const usuarioExistente = await Usuario.findOne({ where: { email }});
-
         if (usuarioExistente) {
             return res.status(400).json({
                 success: false,
-                message : 'el email ya esta registrado'
+                message : 'El email ya esta registrado'
             });
         }
 
         // Crear usuario
         const nuevoUsuario = await Usuario.create({
             nombre,
-            apellido, 
-            email, 
-            password, // el modelo se encargara de hashear la contraseña
+            apellido,
+            email,
+            password,
             rol,
             telefono: telefono || null,
             direccion: direccion || null,
@@ -172,15 +172,14 @@ const crearUsuario = async (req, res) => {
         //Respuesta exitosa
         res.status(201).json({
             success: true,
-            message: 'Usuario creado exitosamente',
+            message: 'Usuario creada exitosamente',
             data: {
-                usuario: nuevoUsuario
-                // convertir a JSON para excluir campos sensibles
+                usuario: nuevoUsuario.toJson() // solo convertir a json para excluir campos sensibles
             }
         });
     } catch (error) {
-            console.error('Error en crear usuario: ', error)
-            if (error.name === 'SequelizeValidationError') {;
+        console.error('Error en crear usuario: ', error);
+        if (error.name === 'SequelizeValidationError') {
             return res.status(400).json({
                 success: false,
                 message: 'Error de validacion',
@@ -191,17 +190,14 @@ const crearUsuario = async (req, res) => {
             success: false, 
             message: 'Error al crear usuario',
             error: error.message
-        });
-
-
+        })
     }
 };
 
 /**
  * Actualizar usuario
  * PUT /api/admin/usuarios/:id
- * Body: { nombre, apellido, email, password, rol, telefono, direccion }
- * 
+ * body: { nombre, apellido, email, password, rol, telefono, direccion }
  * @param {Object} req request Express
  * @param {Object} res response Express
  */
@@ -217,18 +213,17 @@ const actualizarUsuario = async (req, res) => {
        if(!usuario) {
         return res.status(404).json({
             success: false,
-            message: 'usuario no encontrado'
+            message: 'Usuario no encontrada'
             });
         }
 
-
-        // validar rol si se proporciona
+        // Validar rol si se proporcional
         if (rol && ['cliente', 'administrador'].includes(rol)) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Rol Invalido.'
-                });
-            }
+            return res.status(400).json({
+                success: false,
+                message: 'Rol invalido'
+            });
+        }
 
         //Actualizar campos
         if (nombre !== undefined) usuario.nombre = nombre;
@@ -243,32 +238,42 @@ const actualizarUsuario = async (req, res) => {
         //respuesta exitosa
         res.json({
             success: true,
-            message: 'usuario actualizada exitosamnete',
+            message: 'Usuario actualizada exitosamnete',
             data: {
                 usuario: usuario.toJSON()
             }
         });
 
     } catch (error) {
-    console.error('Error en actualizarUsuario: ', error);
-        return res.status(500).json({
-             success: false,
-             message: 'Error de validacion',
-             errors: error.errors.map(e => e.message)
+        console.error('Error en actualizarUsuario: ', error);
+
+        if (error.name === 'SequelizeValidationError') {
+            return res.status(400).json({
+                success: false,
+                message: 'Error de validacion',
+                errors: error.errors.map(e => e.message)
+            });
+        }
+
+        res.status(500).json ({
+            success: false,
+            message: 'error al actualizar usuario',
+            error: error.message
         });
     }
 };
 
 /**
- * Activar/Desactivar Usuario
+ * Activar/Desactivar usuario
  * PATCH /api/admin/usuarios/:id/estado
  * 
+ * Al desactivar un usuario
  * @param {Object} req request Express
  * @param {Object} res response Express
  */
-const toggleUsuario = async (req, res) =>{
+const toggleUsuario = async (req, res) => {
     try {
-    const { id } = req.params;
+        const { id } = req.params;
 
         //Buscar usuario
         const usuario = await Usuario.findByPk(id);
@@ -276,11 +281,11 @@ const toggleUsuario = async (req, res) =>{
         if(!usuario) {
             return res.status(404).json({
                 success: false, 
-                message: 'Usuario no encontrado'
+                message: 'Usuario no encontrada'
             });
         }
 
-        //NO permitir desactivar el propio admin
+        //no permitir desactivar el propio admin
         if (usuario.id === req.usuario.id) {
             return res.status(400).json({
                 success: false,
@@ -289,20 +294,18 @@ const toggleUsuario = async (req, res) =>{
         }
 
         usuario.activo = !usuario.activo;
-
-        // Guardar cambios
         await usuario.save();
 
         res.json({
             success: true,
-            message: `Usuario ${ usuario.activo ? 'activado' : 'desactivado'} existosamente`,
+            message: `Usuario ${usuario.activo ? 'activado' : 'desactivado '} exitosamente`,
             data: {
                 usuario: usuario.toJSON()
             }
         });
 
     } catch (error) {
-        console.error('Error en toggleUsuario: ', error);
+        console.error('Error en toglleUusario: ', error);
         res.status(500).json({
             success: false,
             message: 'Error al cambiar el estado del usuario',
@@ -312,7 +315,7 @@ const toggleUsuario = async (req, res) =>{
 };
 
 /**
- * Eliminar Usuario
+ * Eliminar usuario 
  * DELETE /api/admin/usuarios/:id
  * @param {Object} req request Express
  * @param {Object} res response Express
@@ -324,14 +327,14 @@ const eliminarUsuario = async (req,res) => {
         //Buscar usuario
         const usuario = await Usuario.findByPk(id);
 
-        if(!usuario) {
+        if (!usuario) {
             return res.status(404).json({
-                success: false, 
-                message: 'Usuario no encontrado'
+                success: false,
+                message: 'Uusuario no encontrada'
             });
         }
 
-        // No permitir eliminar el propio admin
+        //no permitir eliminar al propio admin
         if (usuario.id === req.usuario.id) {
             return res.status(400).json({
                 success: false,
@@ -340,13 +343,14 @@ const eliminarUsuario = async (req,res) => {
         }
         await usuario.destroy();
 
+        //Respuesta exitosa
         res.json({
             success: true,
             message: 'Usuario eliminado exitosamente'
         });
 
     } catch (error) {
-        console.error ('Error al eliminarUsuario', error);
+        console.error ('Error al eliminar usuario', error);
         res.status(500).json({
             success: false,
             message: 'Error al eliminar usuario', 
@@ -356,44 +360,44 @@ const eliminarUsuario = async (req,res) => {
 };
 
 /**
- * Obtener estadisticas de usuarios
+ * Obtener estadisticas de un usuario
  * GET /api/admin/usuarios/estadisticas
  * @param {Object} req request Express
  * @param {Object} res response Express
  */
 const getEstadisticasUsuarios = async (req, res)  => {
     try {
-            
-       //Datos de usuarios
-       const totalUsuarios = await Usuario.count();
-       const totalClientes = await Usuario.count({ where: { rol: 'cliente'}});
-       const totalAdmins = await Usuario.count({ where: { rol: 'administrador'}});
-       const usuariosActivos = await Usuario.count({ where: { activo: true}});
-       const usuariosInactivos = await Usuario.count({ where: { activo: false}}); 
+        //datos de usuarios
+        const totalUsuarios = await Usuario.count();
+        const totalClientes = await Usuario.count({ where: { rol: 'cliente' }});
+        const totalAdmins = await Usuario.count({ where: { rol: 'administrador' }});
+        const usuariosActivos = await Usuario.count({ where: { activo: true }});
+        const usuariosInactivos = await Usuario.count({ where: { activo: false }});
 
         //Respuesta exitosa
+
         res.json({
             success: true,
             data: {
                 total: totalUsuarios,
                 porRol: {
                     clientes: totalClientes,
-                    administradores: totalAdmins
+                    admins: totalAdmins,
                 },
                 porEstado: {
                     activos: usuariosActivos,
-                    inactivos: usuariosInactivos
+                    inactivos: usuariosInactivos,
                 },
             }
         });
 
     } catch(error) {
-        console.error('Error en getEstadisticasUsuarios: ',error);
+        console.error('Error en getEstadisticasUusarios: ',error);
         res.status(500).json({
             success: false,
-            message: 'Error al obtener  estadisticas de usuarios',
+            message: 'Error al obtener estadisticas',
             error: error.message
-        });
+        })
     }
 };
 //Exportar todos los controladores

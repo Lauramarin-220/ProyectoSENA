@@ -1,23 +1,21 @@
 /**
  * MODELO CARRITO
- * Define la tabla carrito en la base de datos 
- * Almacena los productosque cada usuario ha agregado a su carrito
- * 
+ * define la tabla Carrito en la base de daos
+ * Almacena los productos que cada usuario ha agregado a su carrito
  */
 
-//Importar DataTypes de sequelize
+//Importar DataType de sequelize 
 const { DataTypes } = require('sequelize');
 
-//importar instancia de sequelize 
-const { sequelize } = require('../config/database');
+//importar instancia de sequelize
+const { sequelize } = require('../config/database'); 
 
 /**
- * Define el modelo de carrito
+ * Definir el modelo del carrito
  */
-
 const Carrito = sequelize.define('Carrito', {
-    //Campos de la tabla 
-    //Id identificador unico (PRIMARE KEY)
+    //Campos de la tabl
+    //Id Identificador unico (PRIMARY KEY)
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -25,16 +23,16 @@ const Carrito = sequelize.define('Carrito', {
         allowNull: false
     },
 
-    // usuarioId del usuario dueño del carrito 
+    // UsuarioId ID del usuario dueño del carrito
     usuarioId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'usuarios',
+            model: 'Usuarios',
             key: 'id'
         },
         onUpdate: 'CASCADE',
-        onDelete: 'CASCADE', // Si elimina el usuario se elimina su carrito
+        onDelete: 'CASCADE',// si se elimina el usuario se elimina su carrito
         validate: {
             notNull: {
                 msg: 'Debe especificar un usuario'
@@ -42,16 +40,16 @@ const Carrito = sequelize.define('Carrito', {
         }
     },
 
-       // productoId del Producto en el carrito 
+     // ProductoId ID del producto en el carrito
     productoId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'productos',
+            model: 'Productos',
             key: 'id'
         },
         onUpdate: 'CASCADE',
-        onDelete: 'CASCADE', // se elimina el producto del carrito
+        onDelete: 'CASCADE',// Se elimina el producto del carrito
         validate: {
             notNull: {
                 msg: 'Debe especificar un producto'
@@ -59,7 +57,7 @@ const Carrito = sequelize.define('Carrito', {
         }
     },
 
-    // cantidad de este producto en el carrito 
+    //Cantidad de este producto en el carrito
     cantidad: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -70,85 +68,84 @@ const Carrito = sequelize.define('Carrito', {
             },
             min: {
                 args: [1],
-                msg: 'La cantidad  debe ser al menos 1' 
+                msg: 'La cantidad debe ser al menos 1'
             }
         }
     },
+
     /**
-     * Precio Unitario del producto al momento de agregarlo al carrito
-     * Se guarda para mantener el precio aunque el producto cambie de precio 
+     * Precio unitario del producto al momemto de agregarlo al carrito
+     * se guarda para mantener el precio aunque el producto cambie de precio
      */
     precioUnitario: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
         validate: {
             isDecimal: {
-                msg: 'El precio debe ser un numero decimal'
+                msg: 'El precio debe ser un numero decimal valido'
             },
             min: {
                 args: [0],
                 msg: 'El precio no puede ser negativo'
             }
         }
-    },
+    }
 }, {
-    //Opciones de modelo
-    
-    tableName: 'carritos', 
-    timestamps: true,
+    //opciones del modelo
 
-    // Indices para mejorar las busquedas 
-    indexes: [
+    tableName: 'carritos',
+    timestamps: true,
+    //indices para mejorar las busquedas 
+    indixes: [
         {
-        //Indice para buscar carrito por usuario
-        fields: ['usuarioId']
-    },
-    {
-    //Indice compuesto: un usuario no puede tener el mismo producto duplicado
-    unique: true,
+            //indice para buscar carrito pot usuario
+            fields: ['usuarioId']
+        },
+
+        {
+        //Indice compuesto: un usuario no puede tener un mismo producto duplicado
+        unique: true,
         fields: ['usuarioId', 'productoId'],
         name: 'usuario_producto_unique'
-    } 
+        }
     ],
-        /**
+
+/**
      * Hooks Acciones automaticas 
      */
 
     hooks: {
         /**
-         * beforeCreate -  se ejecuta antes de crear un item en el carrito 
-         * valida que este esta activo y tenga stock suficiente 
+         * beforeCreate - se ejecuta antes de crear un item en el carrito
+         * valida que este activo y tenga stock suficiente
          */
         beforeCreate: async (itemCarrito) => {
             const Producto = require('./Producto');
 
-            //Buscar el producto 
-            const producto  = await Producto.findByPk(itemCarrito.productoId);
+            //Buscar el producto
+            const producto = await Producto.findByPk(itemCarrito.productoId);
 
-            if (!producto){
+            if (!producto) {
                 throw new Error('El producto no existe');
             }
 
-            if (!producto.activo){
-                throw new Error('no se puede agregar un producto inactivo al carrito');
+            if (!producto.activo) {
+                throw new Error('No se puede agregar un producto inactivo al carrito');
             }
 
             if (!producto.hayStock(itemCarrito.cantidad)) {
-                throw new Error(`Stock insuficiente. Solo hay ${producto.stock} unidades disponibles`);
-
+                throw new Error (`Stock insuficiente. Solo hay ${producto.stock} unidades disponibles`);
             }
 
-            // Guarda el precio actual del producto 
-            itemCarrito.precioUnitario = producto.precio
+            //Guardar el precio actual del producto
+            itemCarrito.precioUnitario = producto.precio;
         },
-
         /**
-         * beforeUpdate: se ejecuta antes de actualizar un carrito
-         * Valida que haya stock suficiente si se aumenta la cantidad 
+         * BeforeUpdate: se ejecuta antes de actualizar un carrito
+         * valida que haya stock suficiente si se aumenta la cantidad
          */
-
         beforeUpdate: async (itemCarrito) => {
-            
+            //Verificar si el campo activo cambio
             if (itemCarrito.changed('cantidad')) {
                 const Producto = require('./Producto');
                 const producto = await Producto.findByPk(itemCarrito.productoId);
@@ -158,29 +155,27 @@ const Carrito = sequelize.define('Carrito', {
                 }
 
                 if (!producto.hayStock(itemCarrito.cantidad)) {
-                    throw new Error (`Error insufciente. solo hay ${producto.stock} unidades disponibles`);
+                    throw new Error (`Stock insuficiente. Solo hay ${producto.stock} unidades disponibles`);
                 }
             }
         }
     }
 });
- 
+
 // METODOS DE INSTACIA 
-
 /**
- * Metodo para calcular el precio subtotal de este item
- * @returns {number} - Subtotal (precio * cantidad)
+ * Metodo para calcular el subtotal de ese item
+ * 
+ * @returns {number} - subtotal (precio * cantidad)
  */
-
 Carrito.prototype.calcularSubtotal = function() {
-   return parseFloat(this.precioUnitario) * this.cantidad;
+    return parseFloat(this.precioUnitario) * this.cantidad;
 };
 
 /**
- * Metodo para actualizar la cantidad 
- * 
+ * Metodo para actualizar la cantidad
  * @param {number} nuevaCantidad - nueva cantidad
- * @return {Promise} item actualizado 
+ * @returns {Promise} Item actualizado *
  */
 Carrito.prototype.actualizarCantidad = async function (nuevaCantidad) {
     const Producto = require('./Producto');
@@ -188,7 +183,7 @@ Carrito.prototype.actualizarCantidad = async function (nuevaCantidad) {
     const producto = await Producto.findByPk(this.productoId);
 
     if (!producto.hayStock(nuevaCantidad)) {
-        throw new Error(`Stock insuficiente. solo hay ${producto.stock} unidades disponibles`);
+        throw new Error(`Stock insuficiente. Solo hay ${producto.stock} unidades disponibles`);
     }
 
     this.cantidad = nuevaCantidad;
@@ -196,36 +191,34 @@ Carrito.prototype.actualizarCantidad = async function (nuevaCantidad) {
 };
 
 /**
- * Metodo para obtener el carrito completo de un usuario 
- * incluye informacion de los productos 
- * @param {number} usuarioId - id del usuario
- * @return {Promise<Array>} - item del carrito con productos 
+ * Metodos para obtener el carrito de un usuario
+ * incluye informacion de los productos
+ * @param {number} usuarioId - id del usurio
+ * @returns {Promise<Array} -Items del carrito con productos
  */
 Carrito.obtenerCarritoUsuario = async function (usuarioId) {
-    const Producto = require('./Producto')
+    const Producto = require('./Producto');
 
     return await this.findAll({
         where: {usuarioId},
         include: [
-        {
+            {
             model: Producto,
             as: 'producto'
-        }
-    ],
-     order: [['createdAt', 'DESC']]
-    }); 
+            }
+        ],
+        order: [['createAt', 'DESC']]
+    });
 };
-
 
 /**
  * Metodo para calcular el total del carrito de un usuario
- * @param {number} usuarioId - id del usuario
- * @return {Promise<number>} - total del carrito
+ * @param {number} usuarioId id del usuario
+ * @returns {Promise<number>} total del carrito
  */
-Carrito.calcularTotalCarrito = async function(usuarioId)
-{
+Carrito.calcularTotalCarrito = async function (usuarioId){
     const items = await this.findAll({
-        where: {usuarioId}
+        where: { usuarioId}
     });
 
     let total = 0;
@@ -237,16 +230,15 @@ Carrito.calcularTotalCarrito = async function(usuarioId)
 
 /**
  * Metodo para vaciar el carrito de un usuario
- * util despues de realizar el pedido 
- * 
+ * util despues de realizar un pedido
  * @param {number} usuarioId - id del usuario
- * @returns {Promise<number>} - numero de items eliminados
+ * @returns {Promise<number>} numero de items eliminados
  */
-Carrito.vaciarCarrito = async function(usuarioId){
+Carrito.vaciarCarrito = async function (usuarioId) {
     return await this.destroy({
-        where: { usuarioId }
+        where: { usuarioId}
     });
 };
 
-// Expotar modelo
+// Exportar modelo 
 module.exports = Carrito;
