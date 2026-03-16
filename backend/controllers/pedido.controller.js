@@ -191,21 +191,54 @@ const cancelarPedido = async (req, res) => {
 /**
  * admin obtener todos los pedidos
  * 
- * Get /api/admuin/pedidos
+ * Get /api/admin/pedidos
  * query ?estado=pendiente&usuarioId=1&pagina=1&limite=10
  */
 const getAllPedidos = async (req, res) => {
     try {
-        // Mock response for testing
+        const { estado, usuarioId, pagina = 1, limite = 20 } = req.query;
+
+        //filtros
+        const where = {};
+        if (estado) where.estado = estado;
+        if (usuarioId) where.usuarioId = usuarioId;
+
+        //paginacion
+        const offset = (parseInt(pagina) - 1) * parseInt(limite);
+
+        //consultar pedidos
+        const { count, rows: pedidos } = await Pedido.findAndCountAll({
+            where,
+            include: [
+                {
+                model: Usuario,
+                as: 'usuario',
+                attributes: ['id', 'nombre', 'email']
+                },
+                {
+                model: DetallePedido,
+                as: 'detalles',
+                include: [{
+                    model: Producto,
+                    as: 'producto',
+                    attributes: ['id', 'nombre', 'imagen']
+                    }]
+                }
+            ],
+            limite: parseInt(limite),
+            offset,
+            order: [['createdAt', 'DESC']]
+        });
+
         res.json({
             success: true,
             data: {
-                pedidos: [],
+                pedidos,
                 paginacion: {
-                    total: 0,
-                    pagina: 1,
-                    limite: 20,
-                    totalPaginas: 0
+                    total: count,
+                    pagina: parseInt(pagina),
+                    limite: parseInt(limite),
+                    totalPaginas: Math.ceil(count / parseInt(limite))
                 }
             }
         });
