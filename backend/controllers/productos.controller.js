@@ -347,7 +347,7 @@ const actualizarProducto = async (req, res) => {
             }
 
             const catId = categoriaId || producto.categoriaId
-            if (!subcategoria.categoriaId !== parseInt(catId)) {
+            if (subcategoria.categoriaId !== parseInt(catId)) {
                 return res.status(404).json({
                     success: false,
                     message: 'La subcategoria no pertenece a la categoria seleccionada'

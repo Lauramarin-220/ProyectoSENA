@@ -82,7 +82,7 @@ const getProductos= async (req, res) => {
        const offset = (parseInt(pagina) -1) * parseInt(limite);
 
         // consultar productos 
-        const opciones = { count, rows: productos } = await Producto.findAndCountAll({
+        const { count, rows: productos } = await Producto.findAndCountAll({
                 where: where,
                 include: [
                     {

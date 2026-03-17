@@ -28,7 +28,7 @@ const Carrito = sequelize.define('Carrito', {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'Usuarios',
+            model: 'usuarios',
             key: 'id'
         },
         onUpdate: 'CASCADE',
@@ -40,7 +40,7 @@ const Carrito = sequelize.define('Carrito', {
         }
     },
 
-     // ProductoId ID del producto en el carrito
+      // ProductoId ID del producto en el carrito
     productoId: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -96,7 +96,7 @@ const Carrito = sequelize.define('Carrito', {
     tableName: 'carritos',
     timestamps: true,
     //indices para mejorar las busquedas 
-    indixes: [
+    indexes: [
         {
             //indice para buscar carrito pot usuario
             fields: ['usuarioId']
