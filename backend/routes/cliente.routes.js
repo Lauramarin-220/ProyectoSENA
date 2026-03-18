@@ -62,7 +62,6 @@ router.delete('/cliente/carrito', verificarAuth, carritoController.vaciarCarrito
 //POST /api/cliente/pedidos
 router.post('/cliente/pedidos', verificarAuth, pedidoController.crearPedido);
 
-
 //GET /api/cliente/pedidos
 router.get('/cliente/pedidos', verificarAuth, pedidoController.getMisPedidos);
 

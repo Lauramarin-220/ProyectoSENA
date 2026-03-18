@@ -65,9 +65,9 @@ const Pedido = sequelize.define('Pedido', {
      * cancelado: pedido cancelado 
      */
     estado: {
-        type: DataTypes.ENUM('Pendiente', 'Pagado', 'Enviado', 'Cancelado'),
+        type: DataTypes.ENUM('pendiente', 'pagado', 'enviado', 'cancelado'),
         allowNull: false,
-        defaulValue: 'pendiente',
+        defaultValue: 'pendiente',
         validate: {
             isIn: {
                 args: [['pendiente', 'pagado', 'enviado', 'cancelado']],

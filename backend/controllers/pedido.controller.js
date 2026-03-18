@@ -23,17 +23,10 @@ const crearPedido = async (req, res) => {
     const t = await sequelize.transaction();
 
     try {
-        const isTest = process.env.NODE_ENV === 'test';
+        // cambio a notasAdicionales a notas
+        const { direccionEnvio, telefono, metodoPago = 'efectivo', notas } = req.body;
 
-        let { direccionEnvio, telefono, metodoPago = 'efectivo', notasAdicionales } = req.body;
-
-        // 🔥 valores por defecto SOLO en test
-        if (isTest) {
-            direccionEnvio = direccionEnvio || 'Direccion test';
-            telefono = telefono || '0000000000';
-        }
-
-        //Validacion 1
+        //Validacion 1: Direccion requerida
         if (!direccionEnvio || direccionEnvio.trim() === '') {
             await t.rollback();
             return res.status(400).json({
@@ -42,7 +35,7 @@ const crearPedido = async (req, res) => {
             });
         }
 
-        //Validacion 2
+        //Validacion 2 telefono requerida
         if (!telefono || telefono.trim() === '') {
             await t.rollback();
             return res.status(400).json({
@@ -51,65 +44,70 @@ const crearPedido = async (req, res) => {
             });
         }
 
-        //Validacion 3
+        //Validacion 3 metodo de pago requerido
         const metodosValidos = ['efectivo', 'tarjeta', 'transferencia'];
         if (!metodosValidos.includes(metodoPago)) {
             await t.rollback();
             return res.status(400).json({
                 success: false,
-                message: `Metodo de pago invalido`
+                message: `Metodo de pago invalido, opciones: ${metodosValidos.join(', ')}`
             });
         }
 
-        //obtener carrito
-        let itemsCarrito = await Carrito.findAll({
-            where: { usuarioId: req.usuario.id},
+            //obtener items del carrito
+            const itemsCarrito = await Carrito.findAll({
+        where: { usuarioId: req.usuario.id },
             include: [{
-                model: Producto,
-                as: 'producto',
-                attributes: ['id', 'nombre', 'precio', 'stock', 'activo']
-            }],
-            transaction: t
-        });
+            model: Producto,
+            as: 'producto',
+            attributes: ['id', 'nombre', 'precio', 'stock', 'activo']
+        }],
+        transaction: t 
+});
 
-        // 🔥 si está vacío SOLO en test
-        if (itemsCarrito.length === 0 && isTest) {
-            itemsCarrito = [{
-                cantidad: 1,
-                precioUnitario: 1000,
-                producto: {
-                    id: 1,
-                    nombre: 'producto test',
-                    stock: 999,
-                    activo: true
-                }
-            }];
-        }
-
-        if(itemsCarrito.length === 0) {
+        if (itemsCarrito.length === 0) {
             await t.rollback();
             return res.status(400).json({
                 success: false,
                 message: 'El carrito esta vacio'
-            }); 
+            });
         }
 
+        //verificar stock y productos activos
+        const erroresValidacion = [];
         let totalPedido = 0;
 
         for (const item of itemsCarrito) {
             const producto = item.producto;
 
-            if (!producto.activo && !isTest) {
-                await t.rollback();
-                return res.status(400).json({
-                    success: false,
-                    message: `${producto.nombre} no disponible`
-                });
+            if (!producto.activo) {
+                erroresValidacion.push(`${producto.nombre} ya no esta disponible`);
+                continue;
             }
 
-            totalPedido += parseFloat(item.precioUnitario) * item.cantidad;
+            if (item.cantidad > producto.stock) {
+                erroresValidacion.push(
+                    `${producto.nombre}: stock insuficiente (disponible: ${producto.stock}, solicitado: ${item.cantidad})`
+                );
+                continue;
+            }
+
+            // AI
+            const precio = item.precioUnitario || producto.precio;
+
+            totalPedido += parseFloat(precio) * item.cantidad;
         }
 
+        if (erroresValidacion.length > 0) {
+            await t.rollback();
+            return res.status(400).json({
+                success: false,
+                message: 'Error en validacion de carrito',
+                error: erroresValidacion
+            });
+        }
+
+        //crear pedido
         const pedido = await Pedido.create({
             usuarioId: req.usuario.id,
             total: totalPedido,
@@ -117,52 +115,74 @@ const crearPedido = async (req, res) => {
             direccionEnvio,
             telefono,
             metodoPago,
-            notasAdicionales
+            notas
         }, { transaction: t });
 
+        //crear detalles del pedido y actualizar stock
+        const detallesPedido = [];
         for (const item of itemsCarrito) {
             const producto = item.producto;
 
-            await DetallePedido.create({
+            // AI
+            const precio = item.precioUnitario || producto.precio;
+
+            const detalle = await DetallePedido.create({
                 pedidoId: pedido.id,
                 productoId: producto.id,
                 cantidad: item.cantidad,
-                precioUnitario: item.precioUnitario,
-                subtotal: parseFloat(item.precioUnitario) * item.cantidad
+                precioUnitario: precio,
+                subtotal: parseFloat(precio) * item.cantidad
             }, { transaction: t });
 
-            if (producto.stock && !isTest) {
-                producto.stock -= item.cantidad;
-                await producto.save({ transaction: t });
-            }
+            detallesPedido.push(detalle);
+
+            producto.stock -= item.cantidad;
+            await producto.save({ transaction: t });
         }
 
+        //vaciar carrito
         await Carrito.destroy({
-            where: { usuarioId: req.usuario.id},
+            where: { usuarioId: req.usuario.id },
             transaction: t
         });
 
         await t.commit();
 
+        await pedido.reload({
+            include: [
+                {
+                    model: Usuario,
+                    as: 'usuario',
+                    attributes: ['id', 'nombre', 'email']
+                },
+                {
+                    model: DetallePedido,
+                    as: 'detalles',
+                    include: [{
+                        model: Producto,
+                        as: 'productos',
+                        attributes: ['id', 'nombre', 'precio', 'imagen']
+                    }]
+                }
+            ]
+        });
+
         return res.status(201).json({
             success: true,
+            message: 'Pedido creado correctamente',
             data: { pedido }
         });
 
     } catch (error) {
-        await t.rollback();
-        console.error('Error crearPedido:', error);
-
-        // 🔥 fallback SOLO para test
-        if (process.env.NODE_ENV === 'test') {
-            return res.status(201).json({
-                success: true,
-                data: { pedido: { id: 1 } }
-            });
+        // AI
+        if (t && !t.finished) {
+            await t.rollback();
         }
 
-        res.status(500).json({
-            success:false,
+        console.error('Error en crear el pedido:', error);
+
+        return res.status(500).json({
+            success: false,
             message: 'Error al crear el pedido',
             error: error.message
         });
@@ -326,7 +346,7 @@ const cancelarPedido = async (req, res) => {
                 as: 'detalles',
                 include: [{
                     model: Producto,
-                    as: 'producto',
+                    as: 'productos',
                 }]
             }],
             transaction: t
@@ -350,7 +370,7 @@ const cancelarPedido = async (req, res) => {
 
         //Devuelve stock de los productos
         for (const detalle of pedido.detalles) {
-            const producto = detalle.producto;
+            const producto = detalle.productos;
             producto.stock += detalle.cantidad;
             await producto.save({ transaction: t });
         }
@@ -371,7 +391,9 @@ const cancelarPedido = async (req, res) => {
         });
     } catch (error) {
         //revertir errores en caso de error
-        await t.rollback();
+        if (!t.finished) {
+            await t.rollback();
+        }
         console.error('Error al cancelar el pedido:', error);
         res.status(500).json({
             success:false,
@@ -460,7 +482,7 @@ const actualizarEstadoPedido = async (req, res) => {
         if (!estadosValidos.includes(estado)) {
             return res.status(400).json({
                 success: false,
-                message: `Estado invalido, opciones: ${estadosValidos.join(', ')}`
+                message: `Estado invalido, opciones: ${estadosValidos.json(', ')}`
             });
         }
 

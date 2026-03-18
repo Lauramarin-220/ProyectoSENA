@@ -76,80 +76,130 @@ const getCarrito = async (req, res) => {
  * @param {Object} req request express
  * @param {Object} res response express
  */
-const agregarAlCarrito = async (req, res) => {
-  try {
-    const { productoId, cantidad } = req.body;
+const agregarAlCarrito = async (req, res) =>{
+    try{
+        const {productoId, cantidad= 1} = req.body; // body = tipo stript
 
-    const usuarioId = req.usuario?.id || req.usuario?.userId;
+        //Validacion 1: campos requeridos
+        if(!productoId) {
+            return res.status(400).json({
+                success:false,
+                message: 'El productoId es requerido'
+            });
+        }
 
-    if (!usuarioId) {
-      return res.status(401).json({
-        success: false,
-        message: "Usuario no autenticado"
-      });
+        // Validacion 2: Cantidad validad
+        const cantidadNum = parseInt (cantidad);
+        if (cantidadNum < 1) {
+            return res.status (400).json({
+                success: false,
+                message: 'La cantidad debe ser menos 1'
+            });
+        }
+
+        //Validacion3: Producto existente y esta activo
+        const producto = await Producto.findByPk(productoId);
+
+        if(!producto) {
+            return res.status(404).json({
+                success:false,
+                message: 'Producto no encontrado'
+            });
+        }
+
+        if (!producto.activo) {
+            return res.status(400).json({
+                success:false,
+                message: 'El producto no est disponible'
+            });
+        }
+
+        //Validacion 4: Varificar si ya existe el prodcuto en el carrito
+        const itemExistente = await Carrito.findOne({
+            where:{
+                usuarioId: req.usuario.id,
+                productoId,
+            }
+        });
+
+        if(itemExistente){
+            //Actualizar cantidad
+            const nuevaCantidad = itemExistente.cantidad + cantidadNum;
+
+            // Validar stock disponible
+            if (nuevaCantidad > producto.stock) {
+                return res.status(400).json ({
+                    success: false,
+                    message: `Stock insuficiente disponible: ${producto.stock}, en carrito: ${itemExistente.cantidad}`
+                })
+            }
+
+            itemExistente.cantidad = nuevaCantidad;
+            await itemExistente.save();
+
+            //Recargar producto         
+            await itemExistente.reload({
+                include:[{
+                    model: Producto,
+                    as: 'producto',
+                    attributes:['id', 'nombre', 'precio', 'stock', 'imagen']
+                }]
+            });
+
+            return res.json ({
+                success: true,
+                message:` Cantidad actualizada en el carrito`,
+                data: { 
+                    item: itemExistente}
+            });
+
+        }
+
+        // validacion 5: stock disponible
+        if (cantidadNum > producto.stock) {
+            return res.status(400).json({
+                success: false,
+                message: `Stock insuficiente, Disponiblr ${producto.stock}`
+            });
+        }
+
+        //crear un nuevo item en el carrito
+        const nuevoItem = await Carrito.create({
+            usuarioId: req.usuario.id,
+            productoId,
+            cantidad: cantidadNum,
+            precioUnitario: producto.precio
+        });
+
+        // recargar con producto
+        await nuevoItem.reload({
+            include: [{
+             model: Producto,
+                as :'producto',
+                attributes: ['id', 'nombre', 'precio', 'stock', 'imagen']
+
+            }]
+        });
+
+        // respuesta exitosa
+        res.status(201).json({
+            success: true,
+            message: 'Producto agreado al carrito',
+            data: {
+                item: nuevoItem
+            }
+        });
+
+
+    } catch (error){
+        console.error ('Error en agregarAlCarrito', error);
+        res.status(500).json ({
+            success: false,
+            message: 'Error al agregar producto al carrito',
+            error: error.message
+        });
     }
-
-    if (!productoId) {
-      return res.status(400).json({
-        success: false,
-        message: "productoId requerido"
-      });
-    }
-
-    const cantidadNum = Number(cantidad) || 1;
-
-    // ⚠️ evitar crash si Producto falla
-    let producto;
-    try {
-      producto = await Producto.findByPk(productoId);
-    } catch (e) {
-      producto = null;
-    }
-
-    if (!producto) {
-      producto = {
-        id: productoId,
-        precio: 1000
-      };
-    }
-
-    let item = await Carrito.findOne({
-      where: { usuarioId, productoId }
-    });
-
-    if (item) {
-      item.cantidad += cantidadNum;
-      await item.save();
-
-      return res.status(200).json({
-        success: true,
-        data: { item }
-      });
-    }
-
-    item = await Carrito.create({
-      usuarioId,
-      productoId,
-      cantidad: cantidadNum,
-      precioUnitario: producto.precio || 1000
-    });
-
-    return res.status(201).json({
-      success: true,
-      data: { item }
-    });
-
-  } catch (error) {
-    console.error("🔥 ERROR REAL:", error);
-
-    // ⚠️ NUNCA devuelvas 500 en test
-    return res.status(200).json({
-      success: true,
-      message: "Se forzó respuesta para test"
-    });
-  }
 };
-
 /**
  * Actualizar la cantidad de item del carrito
  * PUT /api/carrito/:id
@@ -227,7 +277,7 @@ const actualizarItemCarrito = async (req, res) => {
 
 const eliminarItemCarriro = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { id } = req. params;
 
         //Buscar item del carrito
         const item = await Carrito.findOne ({
@@ -292,7 +342,7 @@ const vaciarCarrito = async (req, res) => {
             error: error.message
         });
     }
-}
+;}
 
 //Exportar controladores
 module.exports = {
